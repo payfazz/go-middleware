@@ -1,3 +1,13 @@
+# go-middleware
+
+This project is about simple http middleware that preserve `http.Handler` and `http.HandlerFunc` signature.
+
+I like `negroni` but they introduce new signature `func(http.ResponseWriter, *http.Request, http.HandlerFunc)` which is in my opinion that is not good, becase we already have standard signature `func(http.ResponseWriter, *http.Request)` that defined by golang itself
+
+## example
+
+the content of `examples/sample.go`
+```go
 package main
 
 import (
@@ -65,3 +75,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, "Hello World, hai\n")
 }
+```
+## TODO
+
+* create testing
