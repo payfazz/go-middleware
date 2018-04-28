@@ -78,4 +78,5 @@ func handler(w http.ResponseWriter, r *http.Request) {
 ```
 ## TODO
 
+* create more example usage
 * create testing

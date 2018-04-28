@@ -24,11 +24,24 @@ func WithKV() Func {
 	}
 }
 
+// InjectKV will return middleware for injecting arbitary data.
+// InjectKV require WithKV middleware installed
+func InjectKV(key interface{}, value interface{}) Func {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(rw http.ResponseWriter, r *http.Request) {
+			SetKV(r, key, value)
+			next(rw, r)
+		}
+	}
+}
+
+// GetKV require WithKV middleware installed
 func GetKV(r *http.Request, key interface{}) interface{} {
 	m := r.Context().Value(kvKey).(map[interface{}]interface{})
 	return m[key]
 }
 
+// SetKV require WithKV middleware installed
 func SetKV(r *http.Request, key interface{}, value interface{}) {
 	m := r.Context().Value(kvKey).(map[interface{}]interface{})
 	m[key] = value
