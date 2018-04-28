@@ -12,7 +12,7 @@ import (
 
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
 // the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
-// if the functionality calls for it.
+// if the functionality calls for it. (NOTE: this copied from negroni project)
 type ResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
