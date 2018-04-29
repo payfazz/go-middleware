@@ -30,7 +30,7 @@ func New(callback func(*Event)) middleware.Func {
 				"%s | %d | %v | %s | %s %s\n",
 				event.StartTime.Format(time.RFC3339),
 				event.Status,
-				event.Duration,
+				event.Duration.Truncate(1*time.Millisecond),
 				event.Hostname,
 				event.Method,
 				event.Path,
