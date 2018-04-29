@@ -15,13 +15,14 @@ import (
 	"net/http"
 
 	"github.com/payfazz/go-middleware"
+	"github.com/payfazz/go-middleware/common"
 )
 
 func main() {
 	ms := []middleware.Func{m1, m2}
 	ms2 := []middleware.Func{m3, m4}
 	http.Handle("/", middleware.Compile(
-		middleware.NewLogger(nil),
+		common.BasicPack(),
 		middleware.BuildList(ms, ms2),
 		m5,
 		handler,
@@ -71,10 +72,14 @@ func m5(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.EscapedPath() == "/panic" {
+		panic("test panic")
+	}
 	fmt.Println("inside handler")
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, "Hello World, hai\n")
 }
+
 ```
 ## TODO
 

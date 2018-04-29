@@ -1,7 +1,7 @@
-// this file copied from negroni project
-// see: https://github.com/urfave/negroni/blob/master/response_writer.go
-
-package middleware
+// Package responsewriter is copied from negroni project
+//
+// see: https://github.com/urfave/negroni
+package responsewriter
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ import (
 
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
 // the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
-// if the functionality calls for it. (NOTE: this copied from negroni project)
+// if the functionality calls for it.
 type ResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
@@ -30,8 +30,9 @@ type ResponseWriter interface {
 
 type beforeFunc func(ResponseWriter)
 
-// NewResponseWriter creates a ResponseWriter that wraps an http.ResponseWriter
-func NewResponseWriter(rw http.ResponseWriter) ResponseWriter {
+// New creates a ResponseWriter that wraps an http.ResponseWriter
+func New(rw http.ResponseWriter) ResponseWriter {
+	// already ResponseWriter?, return it
 	if tmp, ok := rw.(ResponseWriter); ok {
 		return tmp
 	}

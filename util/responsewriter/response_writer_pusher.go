@@ -1,9 +1,6 @@
 //+build go1.8
 
-// this file copied from negroni project
-// see: https://github.com/urfave/negroni/blob/master/response_writer.go
-
-package middleware
+package responsewriter
 
 import (
 	"fmt"
