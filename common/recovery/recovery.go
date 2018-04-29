@@ -1,3 +1,4 @@
+// Package recovery provide recovery middleware, it will handle panic in subsequence middleware.
 package recovery
 
 import (
@@ -25,7 +26,7 @@ type Event struct {
 }
 
 // New create recovery middleware, recovery any panic in subsequence middleware.
-// If callback is nil, it will return HTTP 500 internal error and log to stderr
+// If callback is nil, it will write HTTP 500 internal error to client and log to stderr
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {

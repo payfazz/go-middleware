@@ -1,3 +1,6 @@
+// Package kv provide key-value storage middleware.
+// It more efficient to use this middleware instead of using
+// context dirrectly, because http.Request.WithContext always create shallow copy
 package kv
 
 import (
@@ -24,7 +27,7 @@ func New() middleware.Func {
 
 // NewSetter create middleware for injecting arbitary data.
 //
-// NewSetter will panic if key-value middleware not installed
+// NewSetter will panic if kv middleware not installed
 func NewSetter(key interface{}, value interface{}) middleware.Func {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(rw http.ResponseWriter, r *http.Request) {
@@ -36,7 +39,7 @@ func NewSetter(key interface{}, value interface{}) middleware.Func {
 
 // Get get stored value
 //
-// Get will panic if key-value middleware not installed
+// Get will panic if kv middleware not installed
 func Get(r *http.Request, key interface{}) interface{} {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	return m[key]
@@ -44,7 +47,7 @@ func Get(r *http.Request, key interface{}) interface{} {
 
 // Set set stored value
 //
-// Set will panic if key-value middleware not installed
+// Set will panic if kv middleware not installed
 func Set(r *http.Request, key interface{}, value interface{}) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	m[key] = value
