@@ -27,7 +27,7 @@ func New(callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
 			fmt.Printf(
-				"%s | %d | %v | %s | %s %s\n",
+				"%s | REQ | %d | %v | %s | %s %s\n",
 				event.StartTime.Format(time.RFC3339),
 				event.Status,
 				event.Duration.Truncate(1*time.Millisecond),

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/payfazz/go-middleware"
 )
@@ -30,15 +31,15 @@ type Event struct {
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
+			now := time.Now().Format(time.RFC3339)
 			event.ResponseWriter.WriteHeader(http.StatusInternalServerError)
-
 			if len(event.Stack) > 0 {
-				fmt.Fprintf(os.Stderr, "ERR: %s\nSTACK:\n", event.Message)
+				fmt.Fprintf(os.Stderr, "%s | ERR | %s\nSTACK:\n", now, event.Message)
 				for _, s := range event.Stack {
 					fmt.Fprintf(os.Stderr, "- %s:%d\n", s.File, s.Line)
 				}
 			} else {
-				fmt.Fprintf(os.Stderr, "ERR: %s\n", event.Message)
+				fmt.Fprintf(os.Stderr, "%s | ERR | %s\n", now, event.Message)
 			}
 		}
 	}
