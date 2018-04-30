@@ -10,9 +10,9 @@ import (
 	"github.com/payfazz/go-middleware"
 )
 
-type ctxType int
+type ctxType struct{}
 
-const ctxKey ctxType = 0
+var ctxKey ctxType
 
 // New create middleware for storing key-value data in request context
 func New() middleware.Func {

@@ -10,9 +10,9 @@ import (
 	"github.com/payfazz/go-middleware/common/kv"
 )
 
-type keyType int
+type keyType struct{}
 
-const key keyType = 0
+var key keyType
 
 type state struct {
 	list  []string
