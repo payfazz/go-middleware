@@ -13,7 +13,7 @@ func main() {
 	ms2 := []middleware.Func{m3, m4}
 	http.Handle("/", middleware.Compile(
 		common.BasicPack(),
-		middleware.BuildList(ms, ms2),
+		middleware.CompileList(ms, ms2),
 		m5,
 		handler,
 	))

@@ -11,29 +11,29 @@ import (
 type Func func(next http.HandlerFunc) http.HandlerFunc
 
 // Compile all middleware into single http.HandlerFunc.
-// Compile will call BuildList to convert all into []Func
+// Compile have same argument semantic with CompileList.
 func Compile(all ...interface{}) http.HandlerFunc {
 	var f http.HandlerFunc
-	list := BuildList(all...)
+	list := CompileList(all...)
 	for i := len(list) - 1; i >= 0; i-- {
 		f = list[i](f)
 	}
 	return f
 }
 
-// BuildList will convert all into []Func, basically:
-// 	BuildList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
+// CompileList will convert all into []Func, basically:
+// 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
 // and also will convert http.Handler, http.HandlerFunc and func(http.ResponseWriter, *http.Request)
 // into Func, that Func will not call next, i.e. stopping the chain,
 // suitable for last handler in the chain
-func BuildList(all ...interface{}) []Func {
-	var ret []Func
+func CompileList(all ...interface{}) []Func {
+	ret := make([]Func, 0, len(all))
 	for _, item := range all {
 		switch tmp := item.(type) {
 		case Func:
 			ret = append(ret, tmp)
 		case func(next http.HandlerFunc) http.HandlerFunc: // alias for Func
-			ret = append(ret, Func(tmp))
+			ret = append(ret, tmp)
 		case http.Handler:
 			ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
 				return tmp.ServeHTTP
@@ -50,7 +50,7 @@ func BuildList(all ...interface{}) []Func {
 				for i := 0; i < itemValue.Len(); i++ {
 					args[i] = itemValue.Index(i).Interface()
 				}
-				ret = append(ret, BuildList(args...)...)
+				ret = append(ret, CompileList(args...)...)
 			default:
 				panic("middleware: invalid argument")
 			}

@@ -9,7 +9,7 @@ import (
 
 // BasicPack return middleware pack that contain Logger, Recovery, and KV
 func BasicPack() []middleware.Func {
-	return middleware.BuildList(
+	return middleware.CompileList(
 		logger.New(nil),
 		recovery.New(10, nil),
 		kv.New(),
