@@ -1,4 +1,4 @@
-// Package responsewriter is copied from negroni project
+// Package responsewriter provide a wrapper around http.ResponseWriter.
 //
 // see: https://github.com/urfave/negroni
 package responsewriter
@@ -30,8 +30,8 @@ type ResponseWriter interface {
 
 type beforeFunc func(ResponseWriter)
 
-// New creates a ResponseWriter that wraps an http.ResponseWriter
-func New(rw http.ResponseWriter) ResponseWriter {
+// Wrap a http.ResponseWriter
+func Wrap(rw http.ResponseWriter) ResponseWriter {
 	// already ResponseWriter?, return it
 	if tmp, ok := rw.(ResponseWriter); ok {
 		return tmp

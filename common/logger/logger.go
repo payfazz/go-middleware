@@ -46,7 +46,7 @@ func New(callback func(*Event)) middleware.Func {
 				Path:      r.URL.Path,
 				Request:   r,
 			}
-			newW := responsewriter.New(w)
+			newW := responsewriter.Wrap(w)
 			next(newW, r)
 			event.Duration = time.Since(event.StartTime)
 			event.Status = newW.Status()
