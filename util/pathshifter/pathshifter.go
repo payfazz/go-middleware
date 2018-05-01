@@ -19,13 +19,13 @@ type state struct {
 	index int
 }
 
-func (s *state) shift() string {
+func (s *state) shiftEnd() (string, bool) {
 	if s.index == len(s.list) {
-		return ""
+		return "", true
 	}
 	ret := s.list[s.index]
 	s.index++
-	return ret
+	return ret, s.index == len(s.list)
 }
 
 func (s *state) unshift() {
@@ -37,11 +37,21 @@ func (s *state) unshift() {
 
 // Shift return first segment of path, and remove it from its internal state.
 func Shift(r *http.Request) string {
+	ret, _ := shiftEnd(r)
+	return ret
+}
+
+// ShiftEnd is same as Shift, but also indicate the end of the path
+func ShiftEnd(r *http.Request) (string, bool) {
+	return shiftEnd(r)
+}
+
+func shiftEnd(r *http.Request) (string, bool) {
 	tryToInit(r)
 	s := kv.Get(r, key).(*state)
-	ret := s.shift()
+	ret, ok := s.shiftEnd()
 	kv.Set(r, key, s)
-	return ret
+	return ret, ok
 }
 
 // Unshift do the reverse of Shift
