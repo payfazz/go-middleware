@@ -9,9 +9,17 @@ import (
 
 // BasicPack return middleware pack that contain Logger, Recovery, and KV
 func BasicPack() []middleware.Func {
+	return BasicPackWithCb(nil, nil)
+}
+
+// BasicPackWithCb same as BasicPack, but you can provide logger and recovery callback
+func BasicPackWithCb(
+	loggerCb func(*logger.Event),
+	recoveryCb func(*recovery.Event),
+) []middleware.Func {
 	return middleware.CompileList(
-		logger.New(nil),
-		recovery.New(10, nil),
+		logger.New(loggerCb),
+		recovery.New(10, recoveryCb),
 		kv.New(),
 	)
 }
