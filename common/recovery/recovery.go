@@ -11,14 +11,10 @@ import (
 	"github.com/payfazz/go-middleware"
 )
 
-type stringer interface {
-	String() string
-}
-
 // Event struct for recovery callback
 type Event struct {
-	Message string
-	Stack   []struct {
+	Error interface{}
+	Stack []struct {
 		File string
 		Line int
 	}
@@ -31,16 +27,18 @@ type Event struct {
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
-			now := time.Now().Format(time.RFC3339)
 			event.ResponseWriter.WriteHeader(http.StatusInternalServerError)
-			if len(event.Stack) > 0 {
-				fmt.Fprintf(os.Stderr, "%s | ERR | %s\nSTACK:\n", now, event.Message)
-				for _, s := range event.Stack {
-					fmt.Fprintf(os.Stderr, "- %s:%d\n", s.File, s.Line)
+			go func() {
+				now := time.Now().Format(time.RFC3339)
+				if len(event.Stack) > 0 {
+					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\nSTACK:\n", now, event.Error)
+					for _, s := range event.Stack {
+						fmt.Fprintf(os.Stderr, "- %s:%d\n", s.File, s.Line)
+					}
+				} else {
+					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\n", now, event.Error)
 				}
-			} else {
-				fmt.Fprintf(os.Stderr, "%s | ERR | %s\n", now, event.Message)
-			}
+			}()
 		}
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
@@ -48,18 +46,9 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 			defer func() {
 				if rec := recover(); rec != nil {
 					event := Event{
+						Error:          rec,
 						ResponseWriter: w,
 						Request:        r,
-					}
-					switch rec := rec.(type) {
-					case error:
-						event.Message = rec.Error()
-					case stringer:
-						event.Message = rec.String()
-					case string:
-						event.Message = rec
-					default:
-						event.Message = "unknown error"
 					}
 					if stackTraceDepth > 0 {
 						ptrs := make([]uintptr, stackTraceDepth)
