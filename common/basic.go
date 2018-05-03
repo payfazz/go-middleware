@@ -1,3 +1,4 @@
+// Package common provide pack that commonly used in every middleware chain
 package common
 
 import (

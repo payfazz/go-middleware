@@ -1,3 +1,8 @@
+// Package middleware provide simple middleware framework.
+// it preserve http.Handler signature from net/http package, which is good thing
+// because it will always compatible with other library that follow this standard library signature
+//
+// for example usage, see examples directory
 package middleware
 
 import (
@@ -8,6 +13,17 @@ import (
 // Func is function alias that take http.HandlerFunc as next middleware in the chains.
 //
 // next will be nil if this middleware is last middleware in chain
+//
+// example:
+//	func SampleMiddleware() Func {
+//		return func (next http.HandlerFunc) http.HandlerFunc {
+//			return func(w http.ResponseWriter, r *http.Request) {
+//				fmt.Println("m1 before")
+//				next(w, r)
+//				fmt.Println("m1 after")
+//			}
+//		}
+//	}
 type Func func(next http.HandlerFunc) http.HandlerFunc
 
 // Compile all middleware into single http.HandlerFunc.
@@ -23,8 +39,8 @@ func Compile(all ...interface{}) http.HandlerFunc {
 
 // CompileList will convert all into []Func, basically:
 // 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
-// and also will convert http.Handler, http.HandlerFunc and func(http.ResponseWriter, *http.Request)
-// into Func, that Func will not call next, i.e. stopping the chain,
+// and also will convert http.Handler into Func,
+// that Func will not call next, i.e. stopping the chain,
 // suitable for last handler in the chain
 func CompileList(all ...interface{}) []Func {
 	ret := make([]Func, 0, len(all))
