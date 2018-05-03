@@ -29,18 +29,18 @@ func Compile(all ...interface{}) http.HandlerFunc {
 func CompileList(all ...interface{}) []Func {
 	ret := make([]Func, 0, len(all))
 	for _, item := range all {
-		switch tmp := item.(type) {
+		switch item := item.(type) {
 		case Func:
-			ret = append(ret, tmp)
+			ret = append(ret, item)
 		case func(next http.HandlerFunc) http.HandlerFunc: // alias for Func
-			ret = append(ret, tmp)
+			ret = append(ret, item)
 		case http.Handler:
 			ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
-				return tmp.ServeHTTP
+				return item.ServeHTTP
 			})
 		case func(http.ResponseWriter, *http.Request): // alias for http.HandlerFunc
 			ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
-				return tmp
+				return item
 			})
 		default:
 			itemValue := reflect.ValueOf(item)

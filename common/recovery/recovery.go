@@ -51,13 +51,13 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 						ResponseWriter: w,
 						Request:        r,
 					}
-					switch tmp := rec.(type) {
+					switch rec := rec.(type) {
 					case error:
-						event.Message = tmp.Error()
+						event.Message = rec.Error()
 					case stringer:
-						event.Message = tmp.String()
+						event.Message = rec.String()
 					case string:
-						event.Message = tmp
+						event.Message = rec
 					default:
 						event.Message = "unknown error"
 					}
