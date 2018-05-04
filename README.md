@@ -1,5 +1,7 @@
 # go-middleware
 
+[![GoDoc](https://godoc.org/github.com/payfazz/go-middleware?status.svg)](https://godoc.org/github.com/payfazz/go-middleware)
+
 Fast golang middleware.
 
 This project is about simple http middleware that preserve `http.Handler` and `http.HandlerFunc` signature.
