@@ -29,14 +29,23 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 		callback = func(event *Event) {
 			event.ResponseWriter.WriteHeader(http.StatusInternalServerError)
 			go func() {
+				var errMsg interface{}
+				switch err := event.Error.(type) {
+				case error:
+					errMsg = err.Error()
+				case fmt.Stringer:
+					errMsg = err.String()
+				default:
+					errMsg = err
+				}
 				now := time.Now().Format(time.RFC3339)
 				if len(event.Stack) > 0 {
-					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\nSTACK:\n", now, event.Error)
+					fmt.Fprintf(os.Stderr, "%s | ERR | %v\nSTACK:\n", now, errMsg)
 					for _, s := range event.Stack {
 						fmt.Fprintf(os.Stderr, "- %s:%d\n", s.File, s.Line)
 					}
 				} else {
-					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\n", now, event.Error)
+					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\n", now, errMsg)
 				}
 			}()
 		}
