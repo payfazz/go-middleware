@@ -26,15 +26,17 @@ type Event struct {
 func New(callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
-			fmt.Printf(
-				"%s | REQ | %d | %v | %s | %s %s\n",
-				event.StartTime.Format(time.RFC3339),
-				event.Status,
-				event.Duration.Truncate(1*time.Millisecond),
-				event.Hostname,
-				event.Method,
-				event.Path,
-			)
+			go func() {
+				fmt.Printf(
+					"%s | REQ | %d | %v | %s | %s %s\n",
+					event.StartTime.Format(time.RFC3339),
+					event.Status,
+					event.Duration.Truncate(1*time.Millisecond),
+					event.Hostname,
+					event.Method,
+					event.Path,
+				)
+			}()
 		}
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
