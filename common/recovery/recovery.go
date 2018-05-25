@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/payfazz/go-middleware"
+	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
 // Event struct for recovery callback
@@ -27,7 +28,16 @@ type Event struct {
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
-			event.ResponseWriter.WriteHeader(http.StatusInternalServerError)
+			newW := responsewriter.Wrap(event.ResponseWriter)
+			if !newW.Written() {
+				newW.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintln(newW,
+					fmt.Sprintf("%d %s",
+						http.StatusInternalServerError,
+						http.StatusText(http.StatusInternalServerError),
+					),
+				)
+			}
 			go func() {
 				var errMsg interface{}
 				switch err := event.Error.(type) {
@@ -77,7 +87,9 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 					callback(&event)
 				}
 			}()
-			next(w, r)
+
+			newW := responsewriter.Wrap(w)
+			next(newW, r)
 		}
 	}
 }
