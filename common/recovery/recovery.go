@@ -72,15 +72,22 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 					if stackTraceDepth > 0 {
 						ptrs := make([]uintptr, stackTraceDepth)
 						ptrsNum := runtime.Callers(4, ptrs[:])
-						for i := 0; i < ptrsNum; i++ {
-							s := struct {
-								File string
-								Line int
-							}{"*unknown", 0}
-							if fn := runtime.FuncForPC(ptrs[i]); fn != nil {
-								s.File, s.Line = fn.FileLine(ptrs[i])
+						if ptrsNum > 0 {
+							frames := runtime.CallersFrames(ptrs)
+							for {
+								frame, more := frames.Next()
+								s := struct {
+									File string
+									Line int
+								}{frame.File, frame.Line}
+								if s.File == "" {
+									s.File = "*unknown"
+								}
+								event.Stack = append(event.Stack, s)
+								if !more {
+									break
+								}
 							}
-							event.Stack = append(event.Stack, s)
 						}
 					}
 
