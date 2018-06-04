@@ -64,6 +64,9 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 		return func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if rec := recover(); rec != nil {
+					if rec == http.ErrAbortHandler {
+						panic(rec)
+					}
 					event := Event{
 						Error:          rec,
 						ResponseWriter: w,
