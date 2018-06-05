@@ -95,6 +95,8 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 					}
 
 					callback(&event)
+
+					panic(http.ErrAbortHandler)
 				}
 			}()
 
