@@ -1,6 +1,8 @@
 // Package kv provide key-value storage middleware.
 // It more efficient to use this middleware instead of using
-// context dirrectly, because http.Request.WithContext always create shallow copy
+// context dirrectly for key-value storage,
+// because http.Request.WithContext always create shallow copy.
+// kv implemented using map, so it is not safe to access it concurrently.
 package kv
 
 import (
