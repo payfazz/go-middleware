@@ -22,7 +22,8 @@ type Event struct {
 }
 
 // New create logger middleware, callback will be called for every request.
-// If callback is nil, it will log to stdout
+// If callback is nil, it will log to stdout.
+// Do not modif Event.Request, and do not access it after the callback return
 func New(callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
@@ -49,11 +50,13 @@ func New(callback func(*Event)) middleware.Func {
 				Request:   r,
 			}
 			newW := responsewriter.Wrap(w)
-			next(newW, r)
-			event.Duration = time.Since(event.StartTime)
-			event.Status = newW.Status()
+			defer func() {
+				event.Duration = time.Since(event.StartTime)
+				event.Status = newW.Status()
 
-			callback(&event)
+				callback(&event)
+			}()
+			next(newW, r)
 		}
 	}
 }
