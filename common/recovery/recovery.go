@@ -1,4 +1,5 @@
 // Package recovery provide recovery middleware, it will handle panic in subsequence middleware.
+// It is not wise to panic inside http.Handler.ServeHTTP, you should write http 500 error by yourself.
 package recovery
 
 import (
@@ -6,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/payfazz/go-middleware"
@@ -19,25 +21,14 @@ type Event struct {
 		File string
 		Line int
 	}
-	ResponseWriter http.ResponseWriter
-	Request        *http.Request
 }
 
 // New create recovery middleware, recovery any panic in subsequence middleware.
-// If callback is nil, it will write HTTP 500 internal error to client and log to stderr
+// If panic occurs, it will write HTTP 500 Internal server error to client and then close the connection,
+// and If callback is nil, it will log to stderr.
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
-			newW := responsewriter.Wrap(event.ResponseWriter)
-			if !newW.Written() {
-				newW.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintln(newW,
-					fmt.Sprintf("%d %s",
-						http.StatusInternalServerError,
-						http.StatusText(http.StatusInternalServerError),
-					),
-				)
-			}
 			go func() {
 				var errMsg interface{}
 				switch err := event.Error.(type) {
@@ -68,9 +59,7 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 						panic(rec)
 					}
 					event := Event{
-						Error:          rec,
-						ResponseWriter: w,
-						Request:        r,
+						Error: rec,
 					}
 					if stackTraceDepth > 0 {
 						ptrs := make([]uintptr, stackTraceDepth)
@@ -92,6 +81,20 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 								}
 							}
 						}
+					}
+
+					newW := responsewriter.Wrap(w)
+					if !newW.Written() {
+						respData := []byte(fmt.Sprintf("%d %s",
+							http.StatusInternalServerError,
+							http.StatusText(http.StatusInternalServerError),
+						))
+						newW.Header().Set("Content-Type", "text/plain")
+						newW.Header().Set("Content-Length", strconv.Itoa(len(respData)))
+						newW.Header().Set("Connection", "close")
+						newW.WriteHeader(http.StatusInternalServerError)
+						newW.Write(respData)
+						newW.Flush()
 					}
 
 					callback(&event)
