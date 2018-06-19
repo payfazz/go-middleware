@@ -4,6 +4,7 @@ package logger
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/payfazz/go-middleware"
@@ -18,6 +19,7 @@ type Event struct {
 	Hostname  string
 	Method    string
 	Path      string
+	Hijacked  bool
 	Request   *http.Request
 }
 
@@ -28,10 +30,16 @@ func New(callback func(*Event)) middleware.Func {
 	if callback == nil {
 		callback = func(event *Event) {
 			go func() {
+				var status string
+				if event.Hijacked {
+					status = "Hijacked"
+				} else {
+					status = strconv.Itoa(event.Status)
+				}
 				fmt.Printf(
-					"%s | REQ | %d | %v | %s | %s %s\n",
+					"%s | REQ | %s | %v | %s | %s %s\n",
 					event.StartTime.Format(time.RFC3339),
-					event.Status,
+					status,
 					event.Duration.Truncate(1*time.Millisecond),
 					event.Hostname,
 					event.Method,
@@ -53,6 +61,7 @@ func New(callback func(*Event)) middleware.Func {
 			defer func() {
 				event.Duration = time.Since(event.StartTime)
 				event.Status = newW.Status()
+				event.Hijacked = newW.Hijacked()
 
 				callback(&event)
 			}()

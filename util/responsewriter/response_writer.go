@@ -1,6 +1,6 @@
 // Package responsewriter provide a wrapper around http.ResponseWriter.
 //
-// see: https://github.com/urfave/negroni
+// forked from: https://github.com/urfave/negroni
 package responsewriter
 
 import (
@@ -26,6 +26,8 @@ type ResponseWriter interface {
 	// Before allows for a function to be called before the ResponseWriter has been written to. This is
 	// useful for setting headers or any other operations that must happen before a response has been written.
 	Before(func(ResponseWriter))
+	// Hijacked return true if the underlying ResponseWritter already hijacked
+	Hijacked() bool
 }
 
 type beforeFunc func(ResponseWriter)
@@ -53,6 +55,7 @@ type responseWriter struct {
 	status      int
 	size        int
 	beforeFuncs []beforeFunc
+	hijacked    bool
 }
 
 func (rw *responseWriter) WriteHeader(s int) {
@@ -92,7 +95,13 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
 	}
-	return hijacker.Hijack()
+	c, bufrw, err := hijacker.Hijack()
+	rw.hijacked = err == nil
+	return c, bufrw, err
+}
+
+func (rw *responseWriter) Hijacked() bool {
+	return rw.hijacked
 }
 
 func (rw *responseWriter) callBefore() {

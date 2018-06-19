@@ -84,7 +84,7 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 					}
 
 					newW := responsewriter.Wrap(w)
-					if !newW.Written() {
+					if !newW.Written() && !newW.Hijacked() {
 						respData := []byte(fmt.Sprintf("%d %s",
 							http.StatusInternalServerError,
 							http.StatusText(http.StatusInternalServerError),

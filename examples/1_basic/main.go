@@ -64,6 +64,22 @@ func m5(next http.HandlerFunc) http.HandlerFunc {
 func handler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.EscapedPath() == "/panic" {
 		panic("test panic")
+	} else if r.URL.EscapedPath() == "/hijack" {
+		if hj, ok := w.(http.Hijacker); !ok {
+			panic("not hijacker")
+		} else {
+			conn, bufrw, err := hj.Hijack()
+			if err != nil {
+				panic(err)
+			}
+			defer conn.Close()
+			fmt.Fprintf(bufrw, "HTTP/1.1 200 OK\r\n")
+			fmt.Fprintf(bufrw, "Connection: Close\r\n")
+			fmt.Fprintf(bufrw, "\r\n")
+			fmt.Fprintf(bufrw, "test hijacker")
+			bufrw.Flush()
+		}
+		return
 	}
 	fmt.Println("inside handler")
 	w.Header().Set("Content-Type", "text/plain")
