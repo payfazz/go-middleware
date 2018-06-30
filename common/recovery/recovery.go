@@ -4,6 +4,7 @@ package recovery
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -28,27 +29,25 @@ type Event struct {
 // and If callback is nil, it will log to stderr.
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
+		logger := log.New(os.Stderr, "ERR ", 0)
 		callback = func(event *Event) {
-			go func() {
-				var errMsg interface{}
-				switch err := event.Error.(type) {
-				case error:
-					errMsg = err.Error()
-				case fmt.Stringer:
-					errMsg = err.String()
-				default:
-					errMsg = err
+			var errMsg interface{}
+			switch err := event.Error.(type) {
+			case error:
+				errMsg = err.Error()
+			case fmt.Stringer:
+				errMsg = err.String()
+			default:
+				errMsg = err
+			}
+			output := fmt.Sprintf("%s | %#v\n", time.Now().Format(time.RFC3339), errMsg)
+			if len(event.Stack) > 0 {
+				output += "STACK:\n"
+				for _, s := range event.Stack {
+					output += fmt.Sprintf("- %s:%d\n", s.File, s.Line)
 				}
-				now := time.Now().Format(time.RFC3339)
-				if len(event.Stack) > 0 {
-					fmt.Fprintf(os.Stderr, "%s | ERR | %v\nSTACK:\n", now, errMsg)
-					for _, s := range event.Stack {
-						fmt.Fprintf(os.Stderr, "- %s:%d\n", s.File, s.Line)
-					}
-				} else {
-					fmt.Fprintf(os.Stderr, "%s | ERR | %#v\n", now, errMsg)
-				}
-			}()
+			}
+			logger.Println(output)
 		}
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
@@ -97,7 +96,7 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 						newW.Flush()
 					}
 
-					callback(&event)
+					go callback(&event)
 
 					panic(http.ErrAbortHandler)
 				}

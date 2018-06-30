@@ -2,8 +2,9 @@
 package logger
 
 import (
-	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -28,6 +29,7 @@ type Event struct {
 // Do not modif Event.Request, and do not access it after the callback return
 func New(callback func(*Event)) middleware.Func {
 	if callback == nil {
+		logger := log.New(os.Stdout, "REQ ", 0)
 		callback = func(event *Event) {
 			go func() {
 				var status string
@@ -36,8 +38,8 @@ func New(callback func(*Event)) middleware.Func {
 				} else {
 					status = strconv.Itoa(event.Status)
 				}
-				fmt.Printf(
-					"%s | REQ | %s | %v | %s | %s %s\n",
+				logger.Printf(
+					"%s | %s | %v | %s | %s %s\n",
 					event.StartTime.Format(time.RFC3339),
 					status,
 					event.Duration.Truncate(1*time.Millisecond),
