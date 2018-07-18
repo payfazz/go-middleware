@@ -43,7 +43,7 @@ func Compile(all ...interface{}) http.HandlerFunc {
 // 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
 // and also will convert http.Handler into Func,
 // that Func will not call next, i.e. stopping the chain,
-// suitable for last handler in the chain
+// suitable for last handler in the chain.
 func CompileList(all ...interface{}) []Func {
 	ret := make([]Func, 0, len(all))
 	for _, item := range all {

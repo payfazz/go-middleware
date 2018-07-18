@@ -24,9 +24,10 @@ type Event struct {
 	}
 }
 
-// New create recovery middleware, recovery any panic in subsequence middleware.
-// If panic occurs, it will write HTTP 500 Internal server error to client and then close the connection,
-// and If callback is nil, it will log to stderr.
+// New return middleware that recovery any panic in subsequence middleware.
+// If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
+// and then close the connection.
+// If callback is nil, it will log to stderr.
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
 		logger := log.New(os.Stderr, "ERR ", 0)
@@ -62,7 +63,7 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 					}
 					if stackTraceDepth > 0 {
 						ptrs := make([]uintptr, stackTraceDepth)
-						ptrsNum := runtime.Callers(4, ptrs[:])
+						ptrsNum := runtime.Callers(4, ptrs)
 						if ptrsNum > 0 {
 							frames := runtime.CallersFrames(ptrs)
 							for {

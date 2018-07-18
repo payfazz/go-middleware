@@ -16,7 +16,7 @@ type ctxType struct{}
 
 var ctxKey ctxType
 
-// New create middleware for storing key-value data in request context
+// New return middleware for storing key-value data in request context
 func New() middleware.Func {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -27,21 +27,21 @@ func New() middleware.Func {
 	}
 }
 
-// NewSetter create middleware for injecting arbitary data.
+// NewSetter return middleware for injecting arbitary data.
 //
-// NewSetter will panic if kv middleware not installed
+// kv middleware must be installed in the middleware chain. see Set.
 func NewSetter(key interface{}, value interface{}) middleware.Func {
 	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			Set(r, key, value)
-			next(rw, r)
+			next(w, r)
 		}
 	}
 }
 
-// Get get stored value
+// Get stored value
 //
-// Get will panic if kv middleware not installed
+// Get will panic if kv middleware not installed in the middleware chain.
 func Get(r *http.Request, key interface{}) interface{} {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	return m[key]
@@ -49,7 +49,7 @@ func Get(r *http.Request, key interface{}) interface{} {
 
 // Set set stored value
 //
-// Set will panic if kv middleware not installed
+// Set will panic if kv middleware not installed in the middleware chain.
 func Set(r *http.Request, key interface{}, value interface{}) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	m[key] = value

@@ -24,7 +24,7 @@ type Event struct {
 	Request   *http.Request
 }
 
-// New create logger middleware, callback will be called for every request.
+// New return logger middleware, callback will be called for every request.
 // If callback is nil, it will log to stdout.
 // Do not modif Event.Request, and do not access it after the callback return
 func New(callback func(*Event)) middleware.Func {
