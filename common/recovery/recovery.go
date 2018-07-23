@@ -91,7 +91,6 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 						))
 						newW.Header().Set("Content-Type", "text/plain")
 						newW.Header().Set("Content-Length", strconv.Itoa(len(respData)))
-						newW.Header().Set("Connection", "close")
 						newW.WriteHeader(http.StatusInternalServerError)
 						newW.Write(respData)
 						newW.Flush()
