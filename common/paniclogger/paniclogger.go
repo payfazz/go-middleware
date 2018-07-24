@@ -1,6 +1,12 @@
-// Package recovery provide recovery middleware, it will handle panic in subsequence middleware.
+// Package paniclogger provide middleware to recover panic, it is just for logging purpose,
+// and send http status 500 if possible.
+// At the end, it will repanic with http.http.ErrAbortHandler.
+//
+// The purpose of this package is only for logging, because with default panic handler
+// (it use http.Server.ErrorLog), you cannot reformat the error message.
+//
 // It is not wise to panic inside http.Handler.ServeHTTP, you should write http 500 error by yourself.
-package recovery
+package paniclogger
 
 import (
 	"fmt"
@@ -15,7 +21,7 @@ import (
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
-// Event struct for recovery callback
+// Event struct for callback
 type Event struct {
 	Error interface{}
 	Stack []struct {
@@ -24,9 +30,9 @@ type Event struct {
 	}
 }
 
-// New return middleware that recovery any panic in subsequence middleware.
+// New return middleware that recover any panic.
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
-// and then close the connection.
+// and then close the connection, by repanic with http.ErrAbortHandler.
 // If callback is nil, it will log to stderr.
 func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 	if callback == nil {
