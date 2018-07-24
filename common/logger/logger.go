@@ -60,14 +60,13 @@ func New(callback func(*Event)) middleware.Func {
 				Request:   r,
 			}
 			newW := responsewriter.Wrap(w)
-			defer func() {
-				event.Duration = time.Since(event.StartTime)
-				event.Status = newW.Status()
-				event.Hijacked = newW.Hijacked()
-
-				callback(&event)
-			}()
 			next(newW, r)
+
+			event.Duration = time.Since(event.StartTime)
+			event.Status = newW.Status()
+			event.Hijacked = newW.Hijacked()
+
+			callback(&event)
 		}
 	}
 }
