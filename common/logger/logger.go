@@ -2,10 +2,10 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/payfazz/go-middleware"
@@ -24,31 +24,16 @@ type Event struct {
 	Request   *http.Request
 }
 
-// New return logger middleware, callback will be called for every request.
-// If callback is nil, it will log to stdout.
+// Callback func.
 // Do not modif Event.Request, and do not access it after the callback return
-func New(callback func(*Event)) middleware.Func {
+type Callback func(*Event)
+
+// New return logger middleware, callback will be called for every request.
+// If callback is nil, it will log to stdout using DefaultLogger.
+func New(callback Callback) middleware.Func {
 	if callback == nil {
-		logger := log.New(os.Stdout, "REQ ", 0)
-		callback = func(event *Event) {
-			go func() {
-				var status string
-				if event.Hijacked {
-					status = "Hijacked"
-				} else {
-					status = strconv.Itoa(event.Status)
-				}
-				logger.Printf(
-					"%s | %s | %v | %s | %s %s\n",
-					event.StartTime.Format(time.RFC3339),
-					status,
-					event.Duration.Truncate(1*time.Millisecond),
-					event.Hostname,
-					event.Method,
-					event.Path,
-				)
-			}()
-		}
+		logger := log.New(os.Stdout, "REQ ", log.LstdFlags)
+		callback = DefaultLogger(logger)
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -68,5 +53,30 @@ func New(callback func(*Event)) middleware.Func {
 
 			callback(&event)
 		}
+	}
+}
+
+// DefaultLogger return default callback function for this middleware.
+// logger can't be nil
+func DefaultLogger(logger *log.Logger) Callback {
+	if logger == nil {
+		panic("logger: log can't be nil")
+	}
+	return func(event *Event) {
+		go func() {
+			var status string
+			if event.Hijacked {
+				status = "Hijacked"
+			} else {
+				status = fmt.Sprintf("%d %s", event.Status, http.StatusText(event.Status))
+			}
+			logger.Printf(
+				"%s | %v | %s %s\n",
+				status,
+				event.Duration.Truncate(1*time.Millisecond),
+				event.Method,
+				event.Path,
+			)
+		}()
 	}
 }

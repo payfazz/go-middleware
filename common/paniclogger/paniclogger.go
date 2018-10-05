@@ -15,7 +15,6 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"time"
 
 	"github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/responsewriter"
@@ -30,32 +29,17 @@ type Event struct {
 	}
 }
 
+// Callback func.
+type Callback func(*Event)
+
 // New return middleware that recover any panic.
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
 // and then close the connection, by repanic with http.ErrAbortHandler.
-// If callback is nil, it will log to stderr.
-func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
+// If callback is nil, it will log to stderr using DefaultLogger.
+func New(stackTraceDepth int, callback Callback) middleware.Func {
 	if callback == nil {
-		logger := log.New(os.Stderr, "ERR ", 0)
-		callback = func(event *Event) {
-			var errMsg interface{}
-			switch err := event.Error.(type) {
-			case error:
-				errMsg = err.Error()
-			case fmt.Stringer:
-				errMsg = err.String()
-			default:
-				errMsg = err
-			}
-			output := fmt.Sprintf("%s | %#v\n", time.Now().Format(time.RFC3339), errMsg)
-			if len(event.Stack) > 0 {
-				output += "STACK:\n"
-				for _, s := range event.Stack {
-					output += fmt.Sprintf("- %s:%d\n", s.File, s.Line)
-				}
-			}
-			logger.Println(output)
-		}
+		logger := log.New(os.Stderr, "ERR ", log.LstdFlags)
+		callback = DefaultLogger(logger)
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -111,5 +95,32 @@ func New(stackTraceDepth int, callback func(*Event)) middleware.Func {
 			newW := responsewriter.Wrap(w)
 			next(newW, r)
 		}
+	}
+}
+
+// DefaultLogger return default callback function for this middleware.
+// logger can't be nil
+func DefaultLogger(logger *log.Logger) Callback {
+	if logger == nil {
+		panic("logger: log can't be nil")
+	}
+	return func(event *Event) {
+		var errMsg interface{}
+		switch err := event.Error.(type) {
+		case error:
+			errMsg = err.Error()
+		case fmt.Stringer:
+			errMsg = err.String()
+		default:
+			errMsg = err
+		}
+		output := fmt.Sprintf("%#v\n", errMsg)
+		if len(event.Stack) > 0 {
+			output += "STACK:\n"
+			for _, s := range event.Stack {
+				output += fmt.Sprintf("- %s:%d\n", s.File, s.Line)
+			}
+		}
+		logger.Println(output)
 	}
 }
