@@ -47,6 +47,9 @@ func Compile(all ...interface{}) http.HandlerFunc {
 func CompileList(all ...interface{}) []Func {
 	ret := make([]Func, 0, len(all))
 	for _, item := range all {
+		if item == nil {
+			panic("middleware: invalid argument: nil")
+		}
 		switch item := item.(type) {
 		case Func:
 			ret = append(ret, item)
@@ -68,7 +71,8 @@ func CompileList(all ...interface{}) []Func {
 				})
 			default:
 				itemValue := reflect.ValueOf(item)
-				switch itemValue.Type().Kind() {
+				itemType := itemValue.Type()
+				switch itemType.Kind() {
 				case reflect.Slice, reflect.Array:
 					args := make([]interface{}, itemValue.Len())
 					for i := 0; i < itemValue.Len(); i++ {
@@ -76,7 +80,12 @@ func CompileList(all ...interface{}) []Func {
 					}
 					ret = append(ret, CompileList(args...)...)
 				default:
-					panic("middleware: invalid argument")
+					name := itemType.String()
+					pkgpath := itemType.PkgPath()
+					if pkgpath != "" {
+						name = pkgpath + "(" + name + ")"
+					}
+					panic("middleware: invalid argument: " + name)
 				}
 			}
 		}
