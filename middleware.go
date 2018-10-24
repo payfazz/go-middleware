@@ -29,7 +29,7 @@ import (
 type Func func(next http.HandlerFunc) http.HandlerFunc
 
 // Compile all middleware into single http.HandlerFunc.
-// Compile have same argument semantic with CompileList.
+// Compile have same argument meaning with CompileList.
 func Compile(all ...interface{}) http.HandlerFunc {
 	var f http.HandlerFunc
 	list := CompileList(all...)
@@ -39,55 +39,67 @@ func Compile(all ...interface{}) http.HandlerFunc {
 	return f
 }
 
-// CompileList will convert all into []Func, basically:
+// CompileList will flatten all into []Func, basically:
 // 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
-// and also will convert http.Handler into Func,
+// and also will convert http.HandlerFunc and http.Handler into leaf Func,
 // that Func will not call next, i.e. stopping the chain,
 // suitable for last handler in the chain.
 func CompileList(all ...interface{}) []Func {
 	ret := make([]Func, 0, len(all))
 	for _, item := range all {
 		if item == nil {
-			panic("middleware: invalid argument: nil")
+			panic("middleware: invalid argument: can't be nil")
 		}
-		switch item := item.(type) {
-		case Func:
-			ret = append(ret, item)
-		case func(next http.HandlerFunc) http.HandlerFunc: // alias for Func
-			ret = append(ret, item)
-		case http.HandlerFunc:
-			ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
-				return item
-			})
-		case func(http.ResponseWriter, *http.Request): // alias for http.HandlerFunc
-			ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
-				return item
-			})
-		default:
-			switch item := item.(type) {
-			case http.Handler:
-				ret = append(ret, func(next http.HandlerFunc) http.HandlerFunc {
-					return item.ServeHTTP
-				})
-			default:
-				itemValue := reflect.ValueOf(item)
-				itemType := itemValue.Type()
-				switch itemType.Kind() {
-				case reflect.Slice, reflect.Array:
-					args := make([]interface{}, itemValue.Len())
-					for i := 0; i < itemValue.Len(); i++ {
-						args[i] = itemValue.Index(i).Interface()
-					}
-					ret = append(ret, CompileList(args...)...)
-				default:
-					name := itemType.String()
-					pkgpath := itemType.PkgPath()
-					if pkgpath != "" {
-						name = pkgpath + "(" + name + ")"
-					}
-					panic("middleware: invalid argument: " + name)
-				}
+
+		itemValue := reflect.ValueOf(item)
+		itemType := itemValue.Type()
+
+		var m Func
+		mValue := reflect.ValueOf(&m).Elem()
+		mType := mValue.Type()
+		if itemType.ConvertibleTo(mType) {
+			mValue.Set(itemValue.Convert(mType))
+			ret = append(ret, m)
+			continue
+		}
+
+		var hf http.HandlerFunc
+		hfValue := reflect.ValueOf(&hf).Elem()
+		hfType := hfValue.Type()
+		if itemType.ConvertibleTo(hfType) {
+			hfValue.Set(itemValue.Convert(hfType))
+			ret = append(ret, Func(func(next http.HandlerFunc) http.HandlerFunc {
+				return hf
+			}))
+			continue
+		}
+
+		var h http.Handler
+		hValue := reflect.ValueOf(&h).Elem()
+		hType := hValue.Type()
+		if itemType.ConvertibleTo(hType) {
+			hValue.Set(itemValue.Convert(hType))
+			ret = append(ret, Func(func(next http.HandlerFunc) http.HandlerFunc {
+				return h.ServeHTTP
+			}))
+			continue
+		}
+
+		switch itemType.Kind() {
+		case reflect.Slice, reflect.Array:
+			args := make([]interface{}, itemValue.Len())
+			for i := 0; i < itemValue.Len(); i++ {
+				args[i] = itemValue.Index(i).Interface()
 			}
+			ret = append(ret, CompileList(args...)...)
+		default:
+			name := itemType.String()
+			pkgpath := itemType.PkgPath()
+			if pkgpath != "" {
+				name = name + " (" + pkgpath + ")"
+			}
+			panic("middleware: invalid argument: " + name +
+				" can't be converted to middleware.Func, http.HandlerFunc or http.Handler")
 		}
 	}
 	return ret
