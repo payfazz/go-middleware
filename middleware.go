@@ -30,6 +30,19 @@ type Func func(next http.HandlerFunc) http.HandlerFunc
 
 // Compile all middleware into single http.HandlerFunc.
 // Compile have same argument meaning with CompileList.
+//
+// You can think Compile as a way to adding decorator,
+// for example:
+//	var h = middleware.Compile(
+//		a(),
+//		b,
+//		func(w http.ResponseWriter, r *http.Request) { ... }
+//	)
+// is semantically equivalent with python code:
+//	@a()
+//	@b
+//	def h(w, r):
+//		...
 func Compile(all ...interface{}) http.HandlerFunc {
 	var f http.HandlerFunc
 	list := CompileList(all...)
