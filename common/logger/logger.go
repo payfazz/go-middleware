@@ -26,7 +26,7 @@ type Event struct {
 
 // Callback func.
 // Do not modif Event.Request, and do not access it after the callback return
-type Callback func(*Event)
+type Callback func(Event)
 
 // New return logger middleware, callback will be called for every request.
 // If callback is nil, it will log to stdout using DefaultLogger.
@@ -51,7 +51,7 @@ func New(callback Callback) middleware.Func {
 			event.Status = newW.Status()
 			event.Hijacked = newW.Hijacked()
 
-			callback(&event)
+			callback(event)
 		}
 	}
 }
@@ -62,7 +62,7 @@ func DefaultLogger(logger *log.Logger) Callback {
 	if logger == nil {
 		panic("logger: log can't be nil")
 	}
-	return func(event *Event) {
+	return func(event Event) {
 		go func() {
 			var status string
 			if event.Hijacked {

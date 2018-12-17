@@ -15,8 +15,8 @@ func BasicPack() []middleware.Func {
 
 // AdvancePack same as BasicPack, but you can provide logger callback, paniclogger callback, and stackTraceDepth
 func AdvancePack(
-	loggerCb func(*logger.Event),
-	pannicloggerCb func(*paniclogger.Event),
+	loggerCb func(logger.Event),
+	pannicloggerCb func(paniclogger.Event),
 	stackTraceDepth int,
 ) []middleware.Func {
 	return middleware.CompileList(

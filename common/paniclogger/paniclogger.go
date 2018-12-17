@@ -30,7 +30,7 @@ type Event struct {
 }
 
 // Callback func.
-type Callback func(*Event)
+type Callback func(Event)
 
 // New return middleware that recover any panic.
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
@@ -86,7 +86,7 @@ func New(stackTraceDepth int, callback Callback) middleware.Func {
 						newW.Flush()
 					}
 
-					go callback(&event)
+					go callback(event)
 
 					panic(http.ErrAbortHandler)
 				}
@@ -104,7 +104,7 @@ func DefaultLogger(logger *log.Logger) Callback {
 	if logger == nil {
 		panic("logger: log can't be nil")
 	}
-	return func(event *Event) {
+	return func(event Event) {
 		var errMsg interface{}
 		switch err := event.Error.(type) {
 		case error:
