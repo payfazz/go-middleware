@@ -1,6 +1,6 @@
 // Package paniclogger provide middleware to recover panic, it is just for logging purpose,
 // and send http status 500 if possible.
-// At the end, it will repanic with http.http.ErrAbortHandler.
+// At the end, it will repanic with http.ErrAbortHandler.
 //
 // The purpose of this package is only for logging, because with default panic handler
 // (it use http.Server.ErrorLog), you cannot reformat the error message.
@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/payfazz/go-middleware"
+	middleware "github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -43,6 +43,8 @@ func New(stackTraceDepth int, callback Callback) middleware.Func {
 	}
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			newW := responsewriter.Wrap(w)
+
 			defer func() {
 				if rec := recover(); rec != nil {
 					if rec == http.ErrAbortHandler {
@@ -73,13 +75,12 @@ func New(stackTraceDepth int, callback Callback) middleware.Func {
 						}
 					}
 
-					newW := responsewriter.Wrap(w)
 					if !newW.Written() && !newW.Hijacked() {
 						respData := []byte(fmt.Sprintf("%d %s",
 							http.StatusInternalServerError,
 							http.StatusText(http.StatusInternalServerError),
 						))
-						newW.Header().Set("Content-Type", "text/plain")
+						newW.Header().Set("Content-Type", "text/plain; charset=utf-8")
 						newW.Header().Set("Content-Length", strconv.Itoa(len(respData)))
 						newW.WriteHeader(http.StatusInternalServerError)
 						newW.Write(respData)
@@ -92,7 +93,6 @@ func New(stackTraceDepth int, callback Callback) middleware.Func {
 				}
 			}()
 
-			newW := responsewriter.Wrap(w)
 			next(newW, r)
 		}
 	}

@@ -2,7 +2,7 @@
 package common
 
 import (
-	"github.com/payfazz/go-middleware"
+	middleware "github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/common/kv"
 	"github.com/payfazz/go-middleware/common/logger"
 	"github.com/payfazz/go-middleware/common/paniclogger"

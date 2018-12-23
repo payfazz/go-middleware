@@ -9,7 +9,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/payfazz/go-middleware"
+	middleware "github.com/payfazz/go-middleware"
 )
 
 type ctxType struct{}

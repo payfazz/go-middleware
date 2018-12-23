@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/payfazz/go-middleware"
+	middleware "github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
