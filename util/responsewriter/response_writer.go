@@ -16,18 +16,29 @@ import (
 type ResponseWriter interface {
 	http.ResponseWriter
 	http.Flusher
+
 	// Status returns the status code of the response or 0 if the response has
 	// not been written
 	Status() int
+
 	// Written returns whether or not the ResponseWriter has been written.
 	Written() bool
+
 	// Size returns the size of the response body.
 	Size() int
+
 	// Before allows for a function to be called before the ResponseWriter has been written to. This is
 	// useful for setting headers or any other operations that must happen before a response has been written.
 	Before(func(ResponseWriter))
+
 	// Hijacked return true if the underlying ResponseWritter already hijacked
 	Hijacked() bool
+
+	// Original return the original http.ResponseWriter
+	Original() http.ResponseWriter
+
+	// internal is just empty function, the purpose is to make this interface cannot be implemented outside this package
+	internal()
 }
 
 type beforeFunc func(ResponseWriter)
@@ -120,6 +131,12 @@ func (rw *responseWriter) Flush() {
 		flusher.Flush()
 	}
 }
+
+func (rw *responseWriter) Original() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
+func (rw *responseWriter) internal() {}
 
 type responseWriterCloseNotifer struct {
 	*responseWriter
