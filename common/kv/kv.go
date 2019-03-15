@@ -8,8 +8,6 @@ package kv
 import (
 	"context"
 	"net/http"
-
-	middleware "github.com/payfazz/go-middleware"
 )
 
 type ctxType struct{}
@@ -17,7 +15,7 @@ type ctxType struct{}
 var ctxKey ctxType
 
 // New return middleware for storing key-value data in request context
-func New() middleware.Func {
+func New() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			next(w, r.WithContext(context.WithValue(
@@ -30,7 +28,7 @@ func New() middleware.Func {
 // NewSetter return middleware for injecting arbitary data.
 //
 // kv middleware must be installed in the middleware chain. see Set.
-func NewSetter(key interface{}, value interface{}) middleware.Func {
+func NewSetter(key interface{}, value interface{}) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			Set(r, key, value)

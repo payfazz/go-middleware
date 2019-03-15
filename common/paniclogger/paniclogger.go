@@ -16,7 +16,6 @@ import (
 	"runtime"
 	"strconv"
 
-	middleware "github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -36,7 +35,7 @@ type Callback func(Event)
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
 // and then close the connection, by repanic with http.ErrAbortHandler.
 // If callback is nil, it will log to stderr using DefaultLogger.
-func New(stackTraceDepth int, callback Callback) middleware.Func {
+func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 	if callback == nil {
 		logger := log.New(os.Stderr, "ERR ", log.LstdFlags)
 		callback = DefaultLogger(logger)
@@ -82,6 +81,7 @@ func New(stackTraceDepth int, callback Callback) middleware.Func {
 						))
 						newW.Header().Set("Content-Type", "text/plain; charset=utf-8")
 						newW.Header().Set("Content-Length", strconv.Itoa(len(respData)))
+						newW.Header().Set("Connection", "close")
 						newW.WriteHeader(http.StatusInternalServerError)
 						newW.Write(respData)
 						newW.Flush()

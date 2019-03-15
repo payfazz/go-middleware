@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	middleware "github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -30,7 +29,7 @@ type Callback func(Event)
 
 // New return logger middleware, callback will be called for every request.
 // If callback is nil, it will log to stdout using DefaultLogger.
-func New(callback Callback) middleware.Func {
+func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 	if callback == nil {
 		logger := log.New(os.Stdout, "REQ ", log.LstdFlags)
 		callback = DefaultLogger(logger)
