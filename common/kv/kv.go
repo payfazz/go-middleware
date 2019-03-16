@@ -25,24 +25,22 @@ func New() func(http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// NewSetter return middleware for injecting arbitary data.
-//
-// kv middleware must be installed in the middleware chain. see Set.
-func NewSetter(key interface{}, value interface{}) func(http.HandlerFunc) http.HandlerFunc {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			Set(r, key, value)
-			next(w, r)
-		}
-	}
-}
-
 // Get stored value
 //
 // Get will panic if kv middleware not installed in the middleware chain.
-func Get(r *http.Request, key interface{}) interface{} {
+func Get(r *http.Request, key interface{}) (interface{}, bool) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
-	return m[key]
+	v, ok := m[key]
+	return v, ok
+}
+
+// MustGet do the same thing as Get, but will panic if it never set before
+func MustGet(r *http.Request, key interface{}) interface{} {
+	v, ok := Get(r, key)
+	if !ok {
+		panic("kv: invalid key")
+	}
+	return v
 }
 
 // Set set stored value

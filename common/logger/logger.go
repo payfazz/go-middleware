@@ -34,6 +34,7 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 		logger := log.New(os.Stdout, "REQ ", log.LstdFlags)
 		callback = DefaultLogger(logger)
 	}
+
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			event := Event{
@@ -44,6 +45,7 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 				Request:   r,
 			}
 			newW := responsewriter.Wrap(w)
+
 			next(newW, r)
 
 			event.Duration = time.Since(event.StartTime)
@@ -61,6 +63,7 @@ func DefaultLogger(logger *log.Logger) Callback {
 	if logger == nil {
 		panic("logger: log can't be nil")
 	}
+
 	return func(event Event) {
 		go func() {
 			var status string

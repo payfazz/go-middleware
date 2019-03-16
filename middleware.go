@@ -1,6 +1,8 @@
 // Package middleware provide simple middleware framework.
-// it preserve http.Handler signature from net/http package, which is good thing
+// it preserve http.HandlerFunc signature from net/http package, which is good thing
 // because it will always compatible with other library that follow this standard library signature
+//
+// Middleware is func(http.HandlerFunc) http.HandlerFunc.
 //
 // for example usage, see examples directory
 //
@@ -12,34 +14,19 @@ import (
 	"reflect"
 )
 
-// Func is function alias that take http.HandlerFunc as next middleware in the chains.
-//
-// next will be nil if this middleware is last middleware in chain
-//
-// example:
-//	func SampleMiddleware() Func {
-//		return func (next http.HandlerFunc) http.HandlerFunc {
-//			return func(w http.ResponseWriter, r *http.Request) {
-//				fmt.Println("m1 before")
-//				next(w, r)
-//				fmt.Println("m1 after")
-//			}
-//		}
-//	}
-type Func func(next http.HandlerFunc) http.HandlerFunc
-
 // Compile all middleware into single http.HandlerFunc.
 // Compile have same argument meaning with CompileList.
+// Compile in fact call CompileList for it arguments.
 //
 // You can think Compile as a way to adding decorator,
 // for example:
 //	var h = middleware.Compile(
-//		a(),
+//		a(someparam),
 //		b,
 //		func(w http.ResponseWriter, r *http.Request) { ... }
 //	)
 // is semantically equivalent with python code:
-//	@a()
+//	@a(someparam)
 //	@b
 //	def h(w, r):
 //		...
@@ -52,13 +39,13 @@ func Compile(all ...interface{}) http.HandlerFunc {
 	return f
 }
 
-// CompileList will flatten all into []Func, basically:
+// CompileList will flatten all params into single array of middleware, basically:
 // 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
-// and also will convert http.HandlerFunc and http.Handler into leaf Func,
-// that Func will not call next, i.e. stopping the chain,
+// and also will convert http.HandlerFunc and http.Handler into leaf middleware,
+// that middleware will not call next, i.e. stopping the chain,
 // suitable for last handler in the chain.
-func CompileList(all ...interface{}) []Func {
-	ret := make([]Func, 0, len(all))
+func CompileList(all ...interface{}) []func(http.HandlerFunc) http.HandlerFunc {
+	ret := make([]func(http.HandlerFunc) http.HandlerFunc, 0, len(all))
 	for _, item := range all {
 		if item == nil {
 			panic("middleware: invalid argument: can't be nil")
@@ -67,7 +54,7 @@ func CompileList(all ...interface{}) []Func {
 		itemValue := reflect.ValueOf(item)
 		itemType := itemValue.Type()
 
-		var m Func
+		var m func(http.HandlerFunc) http.HandlerFunc
 		mValue := reflect.ValueOf(&m).Elem()
 		mType := mValue.Type()
 		if itemType.ConvertibleTo(mType) {
@@ -81,9 +68,9 @@ func CompileList(all ...interface{}) []Func {
 		hfType := hfValue.Type()
 		if itemType.ConvertibleTo(hfType) {
 			hfValue.Set(itemValue.Convert(hfType))
-			ret = append(ret, Func(func(next http.HandlerFunc) http.HandlerFunc {
+			ret = append(ret, func(http.HandlerFunc) http.HandlerFunc {
 				return hf
-			}))
+			})
 			continue
 		}
 
@@ -92,9 +79,9 @@ func CompileList(all ...interface{}) []Func {
 		hType := hValue.Type()
 		if itemType.ConvertibleTo(hType) {
 			hValue.Set(itemValue.Convert(hType))
-			ret = append(ret, Func(func(next http.HandlerFunc) http.HandlerFunc {
+			ret = append(ret, func(http.HandlerFunc) http.HandlerFunc {
 				return h.ServeHTTP
-			}))
+			})
 			continue
 		}
 
@@ -106,13 +93,7 @@ func CompileList(all ...interface{}) []Func {
 			}
 			ret = append(ret, CompileList(args...)...)
 		default:
-			name := itemType.String()
-			pkgpath := itemType.PkgPath()
-			if pkgpath != "" {
-				name = name + " (" + pkgpath + ")"
-			}
-			panic("middleware: invalid argument: " + name +
-				" can't be converted to middleware.Func, http.HandlerFunc or http.Handler")
+			panic("middleware: invalid argument: " + itemType.String() + " can't be converted middleware")
 		}
 	}
 	return ret

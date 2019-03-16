@@ -40,6 +40,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 		logger := log.New(os.Stderr, "ERR ", log.LstdFlags)
 		callback = DefaultLogger(logger)
 	}
+
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			newW := responsewriter.Wrap(w)

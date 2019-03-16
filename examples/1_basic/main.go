@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	ms := []middleware.Func{m1, m2}
-	ms2 := []middleware.Func{m3, m4}
+	ms := []func(http.HandlerFunc) http.HandlerFunc{m1, m2}
+	ms2 := []func(http.HandlerFunc) http.HandlerFunc{m3, m4}
 	http.Handle("/", middleware.Compile(
 		common.BasicPack(),
 		middleware.CompileList(ms, ms2),

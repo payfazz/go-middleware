@@ -29,7 +29,7 @@ type ResponseWriter interface {
 
 	// Before allows for a function to be called before the ResponseWriter has been written to. This is
 	// useful for setting headers or any other operations that must happen before a response has been written.
-	Before(func(ResponseWriter))
+	Before(func())
 
 	// Hijacked return true if the underlying ResponseWritter already hijacked
 	Hijacked() bool
@@ -41,8 +41,6 @@ type ResponseWriter interface {
 	internal()
 }
 
-type beforeFunc func(ResponseWriter)
-
 // Wrap a http.ResponseWriter
 func Wrap(rw http.ResponseWriter) ResponseWriter {
 	// already ResponseWriter?, return it
@@ -50,22 +48,16 @@ func Wrap(rw http.ResponseWriter) ResponseWriter {
 		return tmp
 	}
 
-	nrw := &responseWriter{
+	return &responseWriter{
 		ResponseWriter: rw,
 	}
-
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &responseWriterCloseNotifer{nrw}
-	}
-
-	return nrw
 }
 
 type responseWriter struct {
 	http.ResponseWriter
 	status      int
 	size        int
-	beforeFuncs []beforeFunc
+	beforeFuncs []func()
 	hijacked    bool
 }
 
@@ -97,7 +89,7 @@ func (rw *responseWriter) Written() bool {
 	return rw.status != 0
 }
 
-func (rw *responseWriter) Before(before func(ResponseWriter)) {
+func (rw *responseWriter) Before(before func()) {
 	rw.beforeFuncs = append(rw.beforeFuncs, before)
 }
 
@@ -117,7 +109,7 @@ func (rw *responseWriter) Hijacked() bool {
 
 func (rw *responseWriter) callBefore() {
 	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
-		rw.beforeFuncs[i](rw)
+		rw.beforeFuncs[i]()
 	}
 }
 
@@ -137,11 +129,3 @@ func (rw *responseWriter) Original() http.ResponseWriter {
 }
 
 func (rw *responseWriter) internal() {}
-
-type responseWriterCloseNotifer struct {
-	*responseWriter
-}
-
-func (rw *responseWriterCloseNotifer) CloseNotify() <-chan bool {
-	return rw.ResponseWriter.(http.CloseNotifier).CloseNotify()
-}
