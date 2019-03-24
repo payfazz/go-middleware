@@ -98,3 +98,8 @@ func CompileList(all ...interface{}) []func(http.HandlerFunc) http.HandlerFunc {
 	}
 	return ret
 }
+
+// Nop is dummy middleware, it just return next
+func Nop(next http.HandlerFunc) http.HandlerFunc {
+	return next
+}
