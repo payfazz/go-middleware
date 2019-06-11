@@ -6,6 +6,7 @@ import (
 
 	"github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/common"
+	"github.com/payfazz/go-middleware/common/kv"
 )
 
 func main() {
@@ -21,9 +22,12 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
+const testKey = "test-key"
+
 func m1(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("m1 before")
+		kv.Set(r, testKey, "test-data")
 		next(w, r)
 		fmt.Println("m1 after")
 	}
@@ -82,6 +86,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("inside handler")
+	fmt.Println(kv.MustGet(r, testKey))
 	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, "Hello World, hai\n")
 }

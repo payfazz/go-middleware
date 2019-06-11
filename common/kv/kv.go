@@ -14,17 +14,22 @@ type ctxType struct{}
 
 var ctxKey ctxType
 
+// WrapRequest make sure that the request have kv middleware inside it
+func WrapRequest(r *http.Request) *http.Request {
+	if tmp := r.Context().Value(ctxKey); tmp != nil {
+		return r
+	}
+
+	return r.WithContext(context.WithValue(
+		r.Context(), ctxKey, make(map[interface{}]interface{})),
+	)
+}
+
 // New return middleware for storing key-value data in request context
 func New() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			if tmp := r.Context().Value(ctxKey); tmp != nil {
-				next(w, r)
-			} else {
-				next(w, r.WithContext(context.WithValue(
-					r.Context(), ctxKey, make(map[interface{}]interface{})),
-				))
-			}
+			next(w, WrapRequest(r))
 		}
 	}
 }
