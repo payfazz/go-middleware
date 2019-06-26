@@ -14,9 +14,6 @@ import (
 // the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
 // if the functionality calls for it.
 type ResponseWriter interface {
-	http.ResponseWriter
-	http.Flusher
-
 	// Status returns the status code of the response or 0 if the response has
 	// not been written
 	Status() int
@@ -36,6 +33,10 @@ type ResponseWriter interface {
 
 	// Original return the original http.ResponseWriter
 	Original() http.ResponseWriter
+
+	http.ResponseWriter
+	http.Flusher
+	http.Hijacker
 
 	// internal is just empty function, the purpose is to make this interface cannot be implemented outside this package
 	internal()

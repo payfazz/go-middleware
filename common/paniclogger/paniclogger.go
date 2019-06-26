@@ -31,14 +31,13 @@ type Event struct {
 // Callback func.
 type Callback func(Event)
 
-// New return middleware that recover any panic.
+// New return middleware that log any panic (except http.ErrAbortHandler).
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
 // and then close the connection, by repanic with http.ErrAbortHandler.
-// If callback is nil, it will log to stderr using DefaultLogger.
+// If callback is nil, it will use DefaultLogger(nil).
 func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 	if callback == nil {
-		logger := log.New(os.Stderr, "ERR ", log.LstdFlags)
-		callback = DefaultLogger(logger)
+		callback = DefaultLogger(nil)
 	}
 
 	return func(next http.HandlerFunc) http.HandlerFunc {
@@ -103,7 +102,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 // logger can't be nil
 func DefaultLogger(logger *log.Logger) Callback {
 	if logger == nil {
-		panic("logger: log can't be nil")
+		logger = log.New(os.Stderr, "ERR ", log.LstdFlags)
 	}
 	return func(event Event) {
 		var errMsg interface{}

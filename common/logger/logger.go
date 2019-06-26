@@ -24,15 +24,15 @@ type Event struct {
 }
 
 // Callback func.
-// Do not modif Event.Request, and do not access it after the callback return
+//
+// Do not modif Event.Request.
 type Callback func(Event)
 
 // New return logger middleware, callback will be called for every request.
-// If callback is nil, it will log to stdout using DefaultLogger.
+// If callback is nil, it will use DefaultLogger(nil).
 func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 	if callback == nil {
-		logger := log.New(os.Stdout, "REQ ", log.LstdFlags)
-		callback = DefaultLogger(logger)
+		callback = DefaultLogger(nil)
 	}
 
 	return func(next http.HandlerFunc) http.HandlerFunc {
@@ -58,10 +58,10 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 }
 
 // DefaultLogger return default callback function for this middleware.
-// logger can't be nil
+// if logger is nil, it will use os.Stdout
 func DefaultLogger(logger *log.Logger) Callback {
 	if logger == nil {
-		panic("logger: log can't be nil")
+		logger = log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
 	}
 
 	return func(event Event) {
