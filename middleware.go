@@ -1,8 +1,9 @@
 // Package middleware provide simple middleware framework.
 // it preserve http.HandlerFunc signature from net/http package, which is good thing
-// because it will always compatible with other library that follow this standard library signature
+// because it will always compatible with other library that follow this standard library signature.
 //
-// Middleware is func(http.HandlerFunc) http.HandlerFunc.
+// Middleware is
+//	func(http.HandlerFunc) http.HandlerFunc
 //
 // for example usage, see examples directory
 //
