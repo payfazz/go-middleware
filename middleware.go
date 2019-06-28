@@ -1,13 +1,3 @@
-// Package middleware provide simple middleware framework.
-// it preserve http.HandlerFunc signature from net/http package, which is good thing
-// because it will always compatible with other library that follow this standard library signature.
-//
-// Middleware is
-//	func(http.HandlerFunc) http.HandlerFunc
-//
-// for example usage, see examples directory
-//
-// see also https://gist.github.com/win-t/8a243301bd227cca6135374cf94d9e98 for example usage of go-middleware and go-router
 package middleware
 
 import (
@@ -17,20 +7,9 @@ import (
 
 // Compile all middleware into single http.HandlerFunc.
 // Compile have same argument meaning with CompileList.
-// Compile in fact call CompileList for it arguments.
 //
-// You can think Compile as a way to adding decorator,
-// for example:
-//	var h = middleware.Compile(
-//		a(someparam),
-//		b,
-//		func(w http.ResponseWriter, r *http.Request) { ... }
-//	)
-// is semantically equivalent with python code:
-//	@a(someparam)
-//	@b
-//	def h(w, r):
-//		...
+// Compile in fact call CompileList for it arguments
+// to convert it into flat list.
 func Compile(all ...interface{}) http.HandlerFunc {
 	var f http.HandlerFunc
 	list := CompileList(all...)
@@ -40,10 +19,15 @@ func Compile(all ...interface{}) http.HandlerFunc {
 	return f
 }
 
+// C is same with Compile, it is just shortcut
+func C(all ...interface{}) http.HandlerFunc {
+	return Compile(all...)
+}
+
 // CompileList will flatten all params into single array of middleware, basically:
 // 	CompileList(m1, m2, [m3, m4, [m5, m6]], m7) -> [m1, m2, m3, m4, m5, m6, m7]
-// and also will convert http.HandlerFunc and http.Handler into leaf middleware,
-// that middleware will not call next, i.e. stopping the chain,
+// and also will convert "http.HandlerFunc" and "http.Handler" into middleware that
+// doesn't call next middleware, i.e. stopping the chain,
 // suitable for last handler in the chain.
 func CompileList(all ...interface{}) []func(http.HandlerFunc) http.HandlerFunc {
 	ret := make([]func(http.HandlerFunc) http.HandlerFunc, 0, len(all))
@@ -100,7 +84,18 @@ func CompileList(all ...interface{}) []func(http.HandlerFunc) http.HandlerFunc {
 	return ret
 }
 
-// Nop is dummy middleware, it just return next
+// Nop is dummy middleware.
+//
+// Useful for something like:
+// 	func Logger() func(http.HandlerFunc) http.HandlerFunc {
+// 		if LOG_DISABLED {
+// 			return middleware.Nop
+// 		}
+// 		return logger.New(nil)
+// 	}
+//
+// NOTE: middleware chain only compiled once, so it doesn't have effect
+// if you change "LOG_DISABLED" after it compiled
 func Nop(next http.HandlerFunc) http.HandlerFunc {
 	return next
 }

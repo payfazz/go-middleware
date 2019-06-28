@@ -18,7 +18,7 @@ func genM(text string) func(http.HandlerFunc) http.HandlerFunc {
 	}
 }
 func TestFunc(t *testing.T) {
-	h := middleware.Compile(
+	h := middleware.C(
 		genM("1"),
 		genM("2"),
 		[]interface{}{
@@ -49,7 +49,7 @@ func TestFunc(t *testing.T) {
 }
 
 func TestHandlerFunc(t *testing.T) {
-	h := middleware.Compile(
+	h := middleware.C(
 		genM("1"),
 		genM("2"),
 		[]interface{}{
@@ -84,7 +84,7 @@ func TestHandler(t *testing.T) {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "L")
 	})
-	h := middleware.Compile(
+	h := middleware.C(
 		genM("1"),
 		genM("2"),
 		[]interface{}{
@@ -117,9 +117,9 @@ func TestNil(t *testing.T) {
 		if rec := recover(); rec != nil {
 			return
 		}
-		t.Fatal("middleware.Compile should not be able to process nil")
+		t.Fatal("middleware.C should not be able to process nil")
 	}()
-	middleware.Compile(nil)
+	middleware.C(nil)
 }
 
 func TestType(t *testing.T) {
@@ -127,7 +127,7 @@ func TestType(t *testing.T) {
 		if rec := recover(); rec != nil {
 			return
 		}
-		t.Fatal("middleware.Compile should not be able to unknown type")
+		t.Fatal("middleware.C should not be able to unknown type")
 	}()
-	middleware.Compile(1, 2, 3)
+	middleware.C(1, 2, 3)
 }

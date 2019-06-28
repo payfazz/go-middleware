@@ -1,7 +1,8 @@
 // Package kv provide key-value storage middleware.
+//
 // It more efficient to use this middleware instead of using
 // context dirrectly for key-value storage,
-// because http.Request.WithContext always create shallow copy.
+// because "http.Request.WithContext" always create shallow copy.
 // kv implemented using map, so it is not safe to access it concurrently.
 package kv
 
@@ -10,11 +11,12 @@ import (
 	"net/http"
 )
 
-type ctxType struct{}
+type keyType struct{}
 
-var ctxKey ctxType
+var ctxKey keyType
 
-// WrapRequest make sure that the request have kv middleware inside it
+// WrapRequest make sure that the request have an instance of
+// kv middleware inside "r.Context()"
 func WrapRequest(r *http.Request) *http.Request {
 	if tmp := r.Context().Value(ctxKey); tmp != nil {
 		return r
@@ -25,7 +27,9 @@ func WrapRequest(r *http.Request) *http.Request {
 	)
 }
 
-// New return middleware for storing key-value data in request context
+// New return middleware for storing key-value data in request context.
+//
+// It is common to use this as first middleware in "middleware.Compile"
 func New() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
