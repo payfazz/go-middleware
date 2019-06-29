@@ -3,11 +3,11 @@ package logger
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/payfazz/go-middleware/util/printer"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -25,7 +25,7 @@ type Event struct {
 
 // Callback func.
 //
-// Do not modif Event.Request.
+// Do not modif Event.Request, Event.Request.Body maybe already closed.
 type Callback func(Event)
 
 // New return logger middleware, callback will be called for every request.
@@ -59,26 +59,25 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 
 // DefaultLogger return default callback function for this middleware.
 // if logger is nil, it will use os.Stdout
-func DefaultLogger(logger *log.Logger) Callback {
+func DefaultLogger(logger printer.Printer) Callback {
 	if logger == nil {
-		logger = log.New(os.Stdout, "", log.LstdFlags|log.LUTC)
+		logger = printer.Wrap(os.Stdout)
 	}
 
 	return func(event Event) {
-		go func() {
-			var status string
-			if event.Hijacked {
-				status = "Hijacked"
-			} else {
-				status = fmt.Sprintf("%d %s", event.Status, http.StatusText(event.Status))
-			}
-			logger.Printf(
-				"%s | %v | %s %s\n",
-				status,
-				event.Duration.Truncate(1*time.Millisecond),
-				event.Method,
-				event.Path,
-			)
-		}()
+		var status string
+		if event.Hijacked {
+			status = "Hijacked"
+		} else {
+			status = fmt.Sprintf("%d %s", event.Status, http.StatusText(event.Status))
+		}
+		logger.Print(fmt.Sprintf(
+			"%s | %s | %v | %s %s",
+			time.Now().UTC().Format("02-01-2006 15:04:05.000 MST"),
+			status,
+			event.Duration.Truncate(1*time.Millisecond),
+			event.Method,
+			event.Request.URL.String(),
+		))
 	}
 }

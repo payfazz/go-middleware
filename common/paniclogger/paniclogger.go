@@ -10,12 +10,13 @@ package paniclogger
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
+	"time"
 
+	"github.com/payfazz/go-middleware/util/printer"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -64,7 +65,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 									Line int
 								}{frame.File, frame.Line}
 								if s.File == "" {
-									s.File = "*unknown"
+									s.File = "???"
 								}
 								event.Stack = append(event.Stack, s)
 								if !more {
@@ -87,7 +88,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 						newW.Flush()
 					}
 
-					go callback(event)
+					callback(event)
 
 					panic(http.ErrAbortHandler)
 				}
@@ -99,10 +100,10 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 }
 
 // DefaultLogger return default callback function for this middleware.
-// logger can't be nil
-func DefaultLogger(logger *log.Logger) Callback {
+// if logger is nil, it will use os.Stderr
+func DefaultLogger(logger printer.Printer) Callback {
 	if logger == nil {
-		logger = log.New(os.Stderr, "ERR ", log.LstdFlags)
+		logger = printer.Wrap(os.Stderr)
 	}
 	return func(event Event) {
 		var errMsg interface{}
@@ -114,13 +115,17 @@ func DefaultLogger(logger *log.Logger) Callback {
 		default:
 			errMsg = err
 		}
-		output := fmt.Sprintf("%#v\n", errMsg)
+		output := fmt.Sprintf(
+			"%s | ERR | %#v\n",
+			time.Now().UTC().Format("02-01-2006 15:04:05.000 MST"),
+			errMsg,
+		)
 		if len(event.Stack) > 0 {
 			output += "STACK:\n"
 			for _, s := range event.Stack {
 				output += fmt.Sprintf("- %s:%d\n", s.File, s.Line)
 			}
 		}
-		logger.Println(output)
+		logger.Print(output)
 	}
 }

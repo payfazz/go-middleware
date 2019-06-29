@@ -2,13 +2,13 @@
 package common
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/common/kv"
 	"github.com/payfazz/go-middleware/common/logger"
 	"github.com/payfazz/go-middleware/common/paniclogger"
+	"github.com/payfazz/go-middleware/util/printer"
 )
 
 // BasicPack return middleware pack that contain Logger, PanicLogger, and KV
@@ -17,7 +17,7 @@ func BasicPack() []func(http.HandlerFunc) http.HandlerFunc {
 }
 
 // BasicPack2 do the same as BasicPack, but you can provide out and err logger.
-func BasicPack2(out, err *log.Logger) []func(http.HandlerFunc) http.HandlerFunc {
+func BasicPack2(out, err printer.Printer) []func(http.HandlerFunc) http.HandlerFunc {
 	var loggerCb logger.Callback
 	var panicLoggerCb paniclogger.Callback
 	if out != nil {
