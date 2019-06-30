@@ -68,7 +68,7 @@ func TestAbort(t *testing.T) {
 	h(w, r)
 }
 
-func TestPanic(t *testing.T) {
+func TestPanicNotWritten(t *testing.T) {
 	cw := &checkWrite{}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
@@ -98,7 +98,7 @@ func TestPanic(t *testing.T) {
 	h(w, r)
 }
 
-func TestPanic2(t *testing.T) {
+func TestPanicAlreadyWritten(t *testing.T) {
 	cw := &checkWrite{}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
@@ -110,10 +110,10 @@ func TestPanic2(t *testing.T) {
 		if !cw.written {
 			t.FailNow()
 		}
-		if w.Code != 0 {
+		if w.Code != 200 {
 			t.FailNow()
 		}
-		if len(w.Body.Bytes()) != 0 {
+		if w.Body.String() != "test\n" {
 			t.FailNow()
 		}
 	}()
