@@ -58,4 +58,6 @@
 // as you can see, this is fast when "compiled" handle the real request
 // because all middleware is only compiled once into "compiled",
 // and used multiple times
+//
+// see https://github.com/payfazz/go-middleware
 package middleware

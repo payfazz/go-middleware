@@ -10,7 +10,9 @@ It heavily use clousure and tail call (so it will be faster when tail-cail-optim
 
 see [godoc][godoc] and examples for more information
 
-see also https://github.com/payfazz/go-router for router
+see https://github.com/payfazz/go-router for router
+
+see https://github.com/payfazz/go-handler for alternative signature of http handling
 
 ## TODO
 
