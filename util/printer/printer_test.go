@@ -12,7 +12,7 @@ func TestPrintSingle(t *testing.T) {
 	p := printer.Wrap(b)
 	p.Print("test")
 
-	expected := "test"
+	expected := "test\n"
 	found := b.String()
 	if found != expected {
 		t.Fatalf("expected '%#v', found '%#v'", expected, found)
@@ -24,7 +24,7 @@ func TestPrintMultiple(t *testing.T) {
 	p := printer.Wrap(b)
 	p.Print("test", "lala")
 
-	expected := "testlala"
+	expected := "testlala\n"
 	found := b.String()
 	if found != expected {
 		t.Fatalf("expected '%#v', found '%#v'", expected, found)

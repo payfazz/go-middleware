@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -25,10 +26,18 @@ func (p *printer) Print(v ...interface{}) {
 	if len(v) == 1 {
 		if s2, ok := v[0].(string); ok {
 			s = s2
+			if s[len(s)-1] != '\n' {
+				s += "\n"
+			}
 		}
 	}
 	if s == "" {
-		s = fmt.Sprint(v...)
+		sb := strings.Builder{}
+		sb.WriteString(fmt.Sprint(v...))
+		if sb.String()[sb.Len()-1] != '\n' {
+			sb.WriteByte('\n')
+		}
+		s = sb.String()
 	}
 
 	// peform unsafe zero-copy conversion from string to byte slice
