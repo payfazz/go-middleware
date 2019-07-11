@@ -10,6 +10,7 @@ package paniclogger
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -103,7 +104,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 // if logger is nil, it will use os.Stderr
 func DefaultLogger(logger printer.Printer) Callback {
 	if logger == nil {
-		logger = printer.Wrap(os.Stderr)
+		logger = log.New(os.Stderr, "", 0)
 	}
 	return func(event Event) {
 		var errMsg interface{}
@@ -128,4 +129,9 @@ func DefaultLogger(logger printer.Printer) Callback {
 		}
 		logger.Print(output)
 	}
+}
+
+// NewWithDefaultLogger is same with New(20, DefaultLogger(...)).
+func NewWithDefaultLogger(logger printer.Printer) func(http.HandlerFunc) http.HandlerFunc {
+	return New(20, DefaultLogger(logger))
 }

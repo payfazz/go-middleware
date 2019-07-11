@@ -3,6 +3,7 @@ package logger
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -61,7 +62,7 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 // if logger is nil, it will use os.Stdout
 func DefaultLogger(logger printer.Printer) Callback {
 	if logger == nil {
-		logger = printer.Wrap(os.Stdout)
+		logger = log.New(os.Stdout, "", 0)
 	}
 
 	return func(event Event) {
@@ -80,4 +81,9 @@ func DefaultLogger(logger printer.Printer) Callback {
 			event.Request.URL.String(),
 		))
 	}
+}
+
+// NewWithDefaultLogger is same with New(DefaultLogger(...)).
+func NewWithDefaultLogger(logger printer.Printer) func(http.HandlerFunc) http.HandlerFunc {
+	return New(DefaultLogger(logger))
 }

@@ -3,13 +3,13 @@ package paniclogger_test
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/common/paniclogger"
-	"github.com/payfazz/go-middleware/util/printer"
 )
 
 type checkWrite struct {
@@ -35,7 +35,7 @@ func TestNormal(t *testing.T) {
 	h := middleware.C(
 		paniclogger.New(
 			20,
-			paniclogger.DefaultLogger(printer.Wrap(cw)),
+			paniclogger.DefaultLogger(log.New(cw, "", 0)),
 		),
 		func(w http.ResponseWriter, r *http.Request) {
 		},
@@ -58,7 +58,7 @@ func TestAbort(t *testing.T) {
 	h := middleware.C(
 		paniclogger.New(
 			20,
-			paniclogger.DefaultLogger(printer.Wrap(cw)),
+			paniclogger.DefaultLogger(log.New(cw, "", 0)),
 		),
 		func(w http.ResponseWriter, r *http.Request) {
 			panic(http.ErrAbortHandler)
@@ -88,7 +88,7 @@ func TestPanicNotWritten(t *testing.T) {
 	h := middleware.C(
 		paniclogger.New(
 			20,
-			paniclogger.DefaultLogger(printer.Wrap(cw)),
+			paniclogger.DefaultLogger(log.New(cw, "", 0)),
 		),
 		func(w http.ResponseWriter, r *http.Request) {
 			panic(errors.New("test-panic"))
@@ -121,7 +121,7 @@ func TestPanicAlreadyWritten(t *testing.T) {
 	h := middleware.C(
 		paniclogger.New(
 			20,
-			paniclogger.DefaultLogger(printer.Wrap(cw)),
+			paniclogger.DefaultLogger(log.New(cw, "", 0)),
 		),
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintln(w, "test")
