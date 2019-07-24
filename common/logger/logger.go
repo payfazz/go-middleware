@@ -73,8 +73,8 @@ func DefaultLogger(logger printer.Printer) Callback {
 			status = fmt.Sprintf("%d %s", event.Status, http.StatusText(event.Status))
 		}
 		logger.Print(fmt.Sprintf(
-			"%s | %s | %v | %s %s\n",
-			time.Now().UTC().Format("02-01-2006 15:04:05.000 MST"),
+			"%v | %s | %v | %s %s\n",
+			time.Now().UTC(),
 			status,
 			event.Duration.Truncate(1*time.Millisecond),
 			event.Method,

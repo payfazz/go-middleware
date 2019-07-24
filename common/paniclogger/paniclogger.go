@@ -116,11 +116,7 @@ func DefaultLogger(logger printer.Printer) Callback {
 		default:
 			errMsg = err
 		}
-		output := fmt.Sprintf(
-			"%s | ERR | %#v\n",
-			time.Now().UTC().Format("02-01-2006 15:04:05.000 MST"),
-			errMsg,
-		)
+		output := fmt.Sprintf("%v | ERR | %#v\n", time.Now().UTC(), errMsg)
 		if len(event.Stack) > 0 {
 			output += "STACK:\n"
 			for _, s := range event.Stack {
