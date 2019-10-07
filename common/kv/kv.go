@@ -63,3 +63,13 @@ func Set(r *http.Request, key interface{}, value interface{}) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	m[key] = value
 }
+
+// Injector return middleware to inject data
+func Injector(kvKey interface{}, kvData interface{}) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			Set(r, kvKey, kvData)
+			next(w, r)
+		}
+	}
+}
