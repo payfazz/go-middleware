@@ -10,51 +10,22 @@ import (
 	"net/http"
 )
 
-// ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
-// the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
-// if the functionality calls for it.
-type ResponseWriter interface {
-	// Status returns the status code of the response or 0 if the response has
-	// not been written
-	Status() int
-
-	// Written returns whether or not the ResponseWriter has been written.
-	Written() bool
-
-	// Size returns the size of the response body.
-	Size() int
-
-	// Before allows for a function to be called before the ResponseWriter has been written to. This is
-	// useful for setting headers or any other operations that must happen before a response has been written.
-	Before(func())
-
-	// Hijacked return true if the underlying ResponseWritter already hijacked
-	Hijacked() bool
-
-	// Original return the original http.ResponseWriter
-	Original() http.ResponseWriter
-
-	http.ResponseWriter
-	http.Flusher
-	http.Hijacker
-
-	// internal is just empty function, the purpose is to make this interface cannot be implemented outside this package
-	internal()
-}
-
 // Wrap a http.ResponseWriter
-func Wrap(rw http.ResponseWriter) ResponseWriter {
+func Wrap(rw http.ResponseWriter) *ResponseWriter {
 	// already ResponseWriter?, return it
-	if tmp, ok := rw.(ResponseWriter); ok {
+	if tmp, ok := rw.(*ResponseWriter); ok {
 		return tmp
 	}
 
-	return &responseWriter{
+	return &ResponseWriter{
 		ResponseWriter: rw,
 	}
 }
 
-type responseWriter struct {
+// ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
+// the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
+// if the functionality calls for it.
+type ResponseWriter struct {
 	http.ResponseWriter
 	status      int
 	size        int
@@ -62,13 +33,22 @@ type responseWriter struct {
 	hijacked    bool
 }
 
-func (rw *responseWriter) WriteHeader(s int) {
+// static type check
+var (
+	_ http.ResponseWriter = (*ResponseWriter)(nil)
+	_ http.Flusher        = (*ResponseWriter)(nil)
+	_ http.Hijacker       = (*ResponseWriter)(nil)
+)
+
+// WriteHeader from http.ResponseWriter
+func (rw *ResponseWriter) WriteHeader(s int) {
 	rw.status = s
 	rw.callBefore()
 	rw.ResponseWriter.WriteHeader(s)
 }
 
-func (rw *responseWriter) Write(b []byte) (int, error) {
+// Write from http.ResponseWriter
+func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	if !rw.Written() {
 		// The status will be StatusOK if WriteHeader has not been called yet
 		rw.WriteHeader(http.StatusOK)
@@ -78,23 +58,30 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return size, err
 }
 
-func (rw *responseWriter) Status() int {
+// Status returns the status code of the response or 0 if the response has
+// not been written
+func (rw *ResponseWriter) Status() int {
 	return rw.status
 }
 
-func (rw *responseWriter) Size() int {
+// Size returns the size of the response body.
+func (rw *ResponseWriter) Size() int {
 	return rw.size
 }
 
-func (rw *responseWriter) Written() bool {
+// Written returns whether or not the ResponseWriter has been written.
+func (rw *ResponseWriter) Written() bool {
 	return rw.status != 0
 }
 
-func (rw *responseWriter) Before(before func()) {
+// Before allows for a function to be called before the ResponseWriter has been written to. This is
+// useful for setting headers or any other operations that must happen before a response has been written.
+func (rw *ResponseWriter) Before(before func()) {
 	rw.beforeFuncs = append(rw.beforeFuncs, before)
 }
 
-func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+// Hijack from http.Hijacker
+func (rw *ResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := rw.ResponseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
@@ -104,17 +91,19 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return c, bufrw, err
 }
 
-func (rw *responseWriter) Hijacked() bool {
+// Hijacked return true if the underlying ResponseWritter already hijacked
+func (rw *ResponseWriter) Hijacked() bool {
 	return rw.hijacked
 }
 
-func (rw *responseWriter) callBefore() {
+func (rw *ResponseWriter) callBefore() {
 	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
 		rw.beforeFuncs[i]()
 	}
 }
 
-func (rw *responseWriter) Flush() {
+// Flush from http.Flusher
+func (rw *ResponseWriter) Flush() {
 	flusher, ok := rw.ResponseWriter.(http.Flusher)
 	if ok {
 		if !rw.Written() {
@@ -124,9 +113,3 @@ func (rw *responseWriter) Flush() {
 		flusher.Flush()
 	}
 }
-
-func (rw *responseWriter) Original() http.ResponseWriter {
-	return rw.ResponseWriter
-}
-
-func (rw *responseWriter) internal() {}

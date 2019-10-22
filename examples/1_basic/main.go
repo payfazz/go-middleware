@@ -5,16 +5,24 @@ import (
 	"net/http"
 
 	"github.com/payfazz/go-middleware"
-	"github.com/payfazz/go-middleware/common"
 	"github.com/payfazz/go-middleware/common/kv"
+	"github.com/payfazz/go-middleware/common/logger"
+	"github.com/payfazz/go-middleware/common/paniclogger"
 )
 
 func main() {
-	ms := []func(http.HandlerFunc) http.HandlerFunc{m1, m2}
-	ms2 := []func(http.HandlerFunc) http.HandlerFunc{m3, m4}
+	basicPack := []interface{}{
+		paniclogger.NewWithDefaultLogger(nil),
+		logger.NewWithDefaultLogger(nil),
+		kv.New(),
+	}
+
+	group1 := []interface{}{m1, m2}
+	group2 := []interface{}{m3, m4}
+
 	http.Handle("/", middleware.C(
-		common.BasicPack(),
-		middleware.CompileList(ms, ms2),
+		basicPack,
+		middleware.CompileList(group1, group2),
 		m5,
 		handler,
 	))
