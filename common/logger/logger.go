@@ -1,4 +1,4 @@
-// Package logger provide logger middleware.
+// Package logger provide logger middleware for every http request.
 package logger
 
 import (
@@ -26,7 +26,7 @@ type Event struct {
 
 // Callback func.
 //
-// Do not modif Event.Request, Event.Request.Body maybe already closed.
+// Do not modif Event.Request, Event.Request.Body maybe already processed and closed
 type Callback func(Event)
 
 // New return logger middleware, callback will be called for every request.

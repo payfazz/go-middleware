@@ -2,8 +2,12 @@
 //
 // It more efficient to use this middleware instead of using
 // context dirrectly for key-value storage,
-// because "http.Request.WithContext" always create shallow copy.
-// kv implemented using map, so it is not safe to access it concurrently.
+// because "net/http.Request.WithContext" always create shallow copy.
+//
+// Panic
+//
+// function in this package do nothing to check if kv is already present in request context.
+// therefore if you forget to add it into request context, function like Get and Set will panic.
 package kv
 
 import (
@@ -15,8 +19,7 @@ type keyType struct{}
 
 var ctxKey keyType
 
-// WrapRequest make sure that the request have an instance of
-// kv middleware inside "r.Context()"
+// WrapRequest make sure that the request have an kv in request context
 func WrapRequest(r *http.Request) *http.Request {
 	if tmp := r.Context().Value(ctxKey); tmp != nil {
 		return r
@@ -27,9 +30,7 @@ func WrapRequest(r *http.Request) *http.Request {
 	)
 }
 
-// New return middleware for storing key-value data in request context.
-//
-// It is common to use this as first middleware in "middleware.Compile"
+// New return middleware to make sure that next handler will have kv in request context
 func New() func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -38,9 +39,7 @@ func New() func(http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Get stored value
-//
-// Get will panic if kv middleware not installed in the middleware chain.
+// Get stored value inside kv
 func Get(r *http.Request, key interface{}) (interface{}, bool) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	v, ok := m[key]
@@ -56,15 +55,13 @@ func MustGet(r *http.Request, key interface{}) interface{} {
 	return v
 }
 
-// Set set stored value
-//
-// Set will panic if kv middleware not installed in the middleware chain.
+// Set value inside kv
 func Set(r *http.Request, key interface{}, value interface{}) {
 	m := r.Context().Value(ctxKey).(map[interface{}]interface{})
 	m[key] = value
 }
 
-// Injector return middleware to inject data
+// Injector return middleware to set data, so next handler will have that value in kv
 func Injector(kvKey interface{}, kvData interface{}) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {

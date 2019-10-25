@@ -12,8 +12,8 @@ import (
 
 func main() {
 	basicPack := []interface{}{
-		paniclogger.NewWithDefaultLogger(nil),
-		logger.NewWithDefaultLogger(nil),
+		paniclogger.New(20, nil),
+		logger.New(nil),
 		kv.New(),
 	}
 

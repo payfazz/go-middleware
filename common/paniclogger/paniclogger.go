@@ -1,11 +1,11 @@
 // Package paniclogger provide middleware to recover panic, it is just for logging purpose,
 // and send http status 500 if possible.
-// At the end, it will repanic with http.ErrAbortHandler.
+// At the end, it will repanic with net/http.ErrAbortHandler.
 //
 // The purpose of this package is only for logging, because with default panic handler
-// (it use http.Server.ErrorLog), you cannot reformat the error message.
+// (it use net/http.Server.ErrorLog), you cannot reformat the error message.
 //
-// It is not wise to panic inside http.Handler.ServeHTTP, you should write http 500 error by yourself.
+// It is not wise to panic inside net/http.Handler.ServeHTTP, you should write http 500 error by yourself.
 package paniclogger
 
 import (
@@ -23,7 +23,9 @@ import (
 
 // Event struct for callback
 type Event struct {
+	// the value of the panic function
 	Error interface{}
+
 	Stack []struct {
 		File string
 		Line int
@@ -33,9 +35,9 @@ type Event struct {
 // Callback func.
 type Callback func(Event)
 
-// New return middleware that log any panic (except http.ErrAbortHandler).
+// New return middleware that log any panic (except net/http.ErrAbortHandler).
 // If panic occurs, it will write HTTP 500 Internal server error to client if nothing written yet
-// and then close the connection, by repanic with http.ErrAbortHandler.
+// and then close the connection, by repanic with net/http.ErrAbortHandler.
 // If callback is nil, it will use DefaultLogger(nil).
 func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 	if callback == nil {

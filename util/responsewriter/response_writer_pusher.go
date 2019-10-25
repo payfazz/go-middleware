@@ -12,7 +12,7 @@ var (
 	_ http.Pusher = (*ResponseWriter)(nil)
 )
 
-// Push from http.Pusher
+// Push from net/http.Pusher
 func (rw *ResponseWriter) Push(target string, opts *http.PushOptions) error {
 	pusher, ok := rw.ResponseWriter.(http.Pusher)
 	if ok {

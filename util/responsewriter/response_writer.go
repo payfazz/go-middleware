@@ -1,6 +1,4 @@
-// Package responsewriter provide a wrapper around http.ResponseWriter.
-//
-// forked from: https://github.com/urfave/negroni
+// Package responsewriter provide a wrapper around net/http.ResponseWriter.
 package responsewriter
 
 import (
@@ -10,7 +8,7 @@ import (
 	"net/http"
 )
 
-// Wrap a http.ResponseWriter
+// Wrap a net/http.ResponseWriter, do nothing if rw is already ResponseWriter
 func Wrap(rw http.ResponseWriter) *ResponseWriter {
 	// already ResponseWriter?, return it
 	if tmp, ok := rw.(*ResponseWriter); ok {
@@ -22,15 +20,14 @@ func Wrap(rw http.ResponseWriter) *ResponseWriter {
 	}
 }
 
-// ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
+// ResponseWriter is a wrapper around net/http.ResponseWriter that provides extra information about
 // the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
 // if the functionality calls for it.
 type ResponseWriter struct {
 	http.ResponseWriter
-	status      int
-	size        int
-	beforeFuncs []func()
-	hijacked    bool
+	status   int
+	size     int
+	hijacked bool
 }
 
 // static type check
@@ -40,14 +37,13 @@ var (
 	_ http.Hijacker       = (*ResponseWriter)(nil)
 )
 
-// WriteHeader from http.ResponseWriter
+// WriteHeader from net/http.ResponseWriter
 func (rw *ResponseWriter) WriteHeader(s int) {
 	rw.status = s
-	rw.callBefore()
 	rw.ResponseWriter.WriteHeader(s)
 }
 
-// Write from http.ResponseWriter
+// Write from net/http.ResponseWriter
 func (rw *ResponseWriter) Write(b []byte) (int, error) {
 	if !rw.Written() {
 		// The status will be StatusOK if WriteHeader has not been called yet
@@ -74,13 +70,7 @@ func (rw *ResponseWriter) Written() bool {
 	return rw.status != 0
 }
 
-// Before allows for a function to be called before the ResponseWriter has been written to. This is
-// useful for setting headers or any other operations that must happen before a response has been written.
-func (rw *ResponseWriter) Before(before func()) {
-	rw.beforeFuncs = append(rw.beforeFuncs, before)
-}
-
-// Hijack from http.Hijacker
+// Hijack from net/http.Hijacker
 func (rw *ResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := rw.ResponseWriter.(http.Hijacker)
 	if !ok {
@@ -96,13 +86,7 @@ func (rw *ResponseWriter) Hijacked() bool {
 	return rw.hijacked
 }
 
-func (rw *ResponseWriter) callBefore() {
-	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
-		rw.beforeFuncs[i]()
-	}
-}
-
-// Flush from http.Flusher
+// Flush from net/http.Flusher
 func (rw *ResponseWriter) Flush() {
 	flusher, ok := rw.ResponseWriter.(http.Flusher)
 	if ok {
