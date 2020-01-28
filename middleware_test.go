@@ -122,12 +122,12 @@ func TestNil(t *testing.T) {
 	middleware.C(nil)
 }
 
-func TestArbitaryType(t *testing.T) {
+func TestArbitrary(t *testing.T) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			return
 		}
-		t.Fatal("middleware.C should not be able to arbitary type")
+		t.Fatal("middleware.C should not be able to arbitrary type")
 	}()
 	middleware.C(1, 2, 3)
 }
