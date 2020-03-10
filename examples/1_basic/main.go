@@ -22,7 +22,7 @@ func main() {
 
 	http.Handle("/", middleware.C(
 		basicPack,
-		middleware.CompileList(group1, group2),
+		[]interface{}{group1, group2},
 		m5,
 		handler,
 	))
