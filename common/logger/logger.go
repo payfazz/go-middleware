@@ -70,15 +70,18 @@ func DefaultLogger(logger printer.Printer) Callback {
 		if event.Hijacked {
 			status = "Hijacked"
 		} else {
-			status = fmt.Sprintf("%d %s", event.Status, http.StatusText(event.Status))
+			status = fmt.Sprintf(
+				"%d %s | %s",
+				event.Status,
+				http.StatusText(event.Status),
+				event.Duration.Truncate(1*time.Millisecond).String(),
+			)
 		}
 		logger.Print(fmt.Sprintf(
-			"%v | %s | %v | %s %s\n",
-			time.Now().UTC(),
-			status,
-			event.Duration.Truncate(1*time.Millisecond),
+			"%s %s | %s\n",
 			event.Method,
-			event.Request.URL.String(),
+			event.Request.URL.EscapedPath(),
+			status,
 		))
 	}
 }

@@ -15,7 +15,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/payfazz/go-middleware/util/printer"
 	"github.com/payfazz/go-middleware/util/responsewriter"
@@ -109,23 +109,15 @@ func DefaultLogger(logger printer.Printer) Callback {
 		logger = log.New(os.Stderr, "", 0)
 	}
 	return func(event Event) {
-		var errMsg interface{}
-		switch err := event.Error.(type) {
-		case error:
-			errMsg = err.Error()
-		case fmt.Stringer:
-			errMsg = err.String()
-		default:
-			errMsg = err
-		}
-		output := fmt.Sprintf("%v | ERR | %#v\n", time.Now().UTC(), errMsg)
+		var output strings.Builder
+		output.WriteString(fmt.Sprintf("PANIC: %v\n", event.Error))
 		if len(event.Stack) > 0 {
-			output += "STACK:\n"
+			output.WriteString("STACK:\n")
 			for _, s := range event.Stack {
-				output += fmt.Sprintf("- %s:%d\n", s.File, s.Line)
+				output.WriteString(fmt.Sprintf("- %s:%d\n", s.File, s.Line))
 			}
 		}
-		logger.Print(output)
+		logger.Print(output.String())
 	}
 }
 
