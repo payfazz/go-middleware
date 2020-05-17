@@ -58,7 +58,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 					}
 					if stackTraceDepth > 0 {
 						ptrs := make([]uintptr, stackTraceDepth)
-						ptrsNum := runtime.Callers(4, ptrs)
+						ptrsNum := runtime.Callers(2, ptrs)
 						if ptrsNum > 0 {
 							frames := runtime.CallersFrames(ptrs)
 							for {
