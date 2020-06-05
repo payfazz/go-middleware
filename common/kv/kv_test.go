@@ -18,17 +18,23 @@ func TestNormal(t *testing.T) {
 	var someotherkey someotherkeytype
 
 	h := middleware.C(
-		kv.New(),
 		func(next http.HandlerFunc) http.HandlerFunc {
 			return func(w http.ResponseWriter, r *http.Request) {
-				kv.Set(r, somekey, "test-value")
-				next(w, r)
+				next(w, kv.EnsureKVAndSet(r, somekey, "test-value"))
 			}
 		},
+		func(next http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				next(w, kv.EnsureKVAndSet(r, "stringkey", "stringvalue"))
+			}
+		},
+		kv.Injector(20, "someint"),
 		func(w http.ResponseWriter, r *http.Request) {
 			val1, ok1 := kv.Get(r, somekey)
 			val2, ok2 := kv.Get(r, someotherkey)
-			fmt.Fprintf(w, "%v:%v|%v:%v", ok1, val1, ok2, val2)
+			val3, ok3 := kv.Get(r, "stringkey")
+			val4 := kv.MustGet(r, 20)
+			fmt.Fprintf(w, "%v:%v|%v:%v|%v:%v|true:%v", ok1, val1, ok2, val2, ok3, val3, val4)
 		},
 	)
 
@@ -36,7 +42,7 @@ func TestNormal(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", nil)
 	h(w, r)
 
-	expected := "true:test-value|false:<nil>"
+	expected := "true:test-value|false:<nil>|true:stringvalue|true:someint"
 	found := w.Body.String()
 
 	if found != expected {
@@ -54,7 +60,6 @@ func TestMustGet(t *testing.T) {
 	var somekey somekeytype
 
 	h := middleware.C(
-		kv.New(),
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, kv.MustGet(r, somekey).(string))
 		},
@@ -63,34 +68,4 @@ func TestMustGet(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
 	h(w, r)
-}
-func TestWrapper(t *testing.T) {
-	type somekeytype struct{}
-	var somekey somekeytype
-
-	expected := "test-value"
-
-	h := middleware.C(
-		func(next http.HandlerFunc) http.HandlerFunc {
-			return func(w http.ResponseWriter, r *http.Request) {
-				r = kv.WrapRequest(r)
-				kv.Set(r, somekey, expected)
-				next(w, r)
-			}
-		},
-		func(w http.ResponseWriter, r *http.Request) {
-			r = kv.WrapRequest(r)
-			fmt.Fprint(w, kv.MustGet(r, somekey).(string))
-		},
-	)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/", nil)
-	h(w, r)
-
-	found := w.Body.String()
-
-	if found != expected {
-		t.Fatalf("found '%s', need '%s'", found, expected)
-	}
 }

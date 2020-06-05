@@ -14,7 +14,6 @@ func main() {
 	basicPack := []interface{}{
 		paniclogger.New(20, nil),
 		logger.New(nil),
-		kv.New(),
 	}
 
 	group1 := []interface{}{m1, m2}
@@ -35,7 +34,7 @@ const testKey = "test-key"
 func m1(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("m1 before")
-		kv.Set(r, testKey, "test-data")
+		r = kv.EnsureKVAndSet(r, testKey, "test-data")
 		next(w, r)
 		fmt.Println("m1 after")
 	}
