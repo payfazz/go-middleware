@@ -3,11 +3,6 @@
 // It more efficient to use this middleware instead of using
 // context dirrectly for key-value storage,
 // because "net/http.Request.WithContext" always create shallow copy.
-//
-// Panic
-//
-// function in this package do nothing to check if kv is already present in request context.
-// therefore if you forget to add it into request context, function like Get and Set will panic.
 package kv
 
 import (

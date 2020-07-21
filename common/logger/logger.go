@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/payfazz/go-middleware/util/printer"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -60,7 +59,7 @@ func New(callback Callback) func(http.HandlerFunc) http.HandlerFunc {
 
 // DefaultLogger return default callback function for this middleware.
 // if logger is nil, it will use os.Stdout
-func DefaultLogger(logger printer.Printer) Callback {
+func DefaultLogger(logger interface{ Print(v ...interface{}) }) Callback {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
 	}
@@ -87,6 +86,6 @@ func DefaultLogger(logger printer.Printer) Callback {
 }
 
 // NewWithDefaultLogger is same with New(DefaultLogger(...)).
-func NewWithDefaultLogger(logger printer.Printer) func(http.HandlerFunc) http.HandlerFunc {
+func NewWithDefaultLogger(logger interface{ Print(v ...interface{}) }) func(http.HandlerFunc) http.HandlerFunc {
 	return New(DefaultLogger(logger))
 }

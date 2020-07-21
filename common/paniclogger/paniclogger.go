@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/payfazz/go-middleware/util/printer"
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
@@ -104,7 +103,7 @@ func New(stackTraceDepth int, callback Callback) func(http.HandlerFunc) http.Han
 
 // DefaultLogger return default callback function for this middleware.
 // if logger is nil, it will use os.Stderr
-func DefaultLogger(logger printer.Printer) Callback {
+func DefaultLogger(logger interface{ Print(v ...interface{}) }) Callback {
 	if logger == nil {
 		logger = log.New(os.Stderr, "", 0)
 	}
@@ -122,6 +121,6 @@ func DefaultLogger(logger printer.Printer) Callback {
 }
 
 // NewWithDefaultLogger is same with New(20, DefaultLogger(...)).
-func NewWithDefaultLogger(logger printer.Printer) func(http.HandlerFunc) http.HandlerFunc {
+func NewWithDefaultLogger(logger interface{ Print(v ...interface{}) }) func(http.HandlerFunc) http.HandlerFunc {
 	return New(20, DefaultLogger(logger))
 }
