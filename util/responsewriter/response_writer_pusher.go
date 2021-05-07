@@ -7,16 +7,14 @@ import (
 	"net/http"
 )
 
-// static type check
 var (
-	_ http.Pusher = (*ResponseWriter)(nil)
+	_ http.Pusher = (*responseWritter)(nil)
 )
 
-// Push from net/http.Pusher
-func (rw *ResponseWriter) Push(target string, opts *http.PushOptions) error {
-	pusher, ok := rw.ResponseWriter.(http.Pusher)
-	if ok {
-		return pusher.Push(target, opts)
+func (rw *responseWritter) Push(target string, opts *http.PushOptions) error {
+	pusher, ok := rw.rw.(http.Pusher)
+	if !ok {
+		return fmt.Errorf("Push is not supported")
 	}
-	return fmt.Errorf("the ResponseWriter doesn't support the Pusher interface")
+	return pusher.Push(target, opts)
 }

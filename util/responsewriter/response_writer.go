@@ -1,4 +1,6 @@
-// Package responsewriter provide a wrapper around net/http.ResponseWriter.
+// Package responsewriter.
+//
+// This package provide wrapper type for http.ResponseWriter and provide additional functionality to it
 package responsewriter
 
 import (
@@ -8,92 +10,96 @@ import (
 	"net/http"
 )
 
-// Wrap a net/http.ResponseWriter, do nothing if rw is already ResponseWriter
-func Wrap(rw http.ResponseWriter) *ResponseWriter {
-	// already ResponseWriter?, return it
-	if tmp, ok := rw.(*ResponseWriter); ok {
-		return tmp
-	}
+type ResponseWriter interface {
+	http.ResponseWriter
 
-	return &ResponseWriter{
-		ResponseWriter: rw,
-	}
+	// Written status
+	Status() int
+
+	// Written body size
+	Size() int
+
+	// Written
+	Written() bool
+
+	// Tells if hijacked
+	Hijacked() bool
 }
 
-// ResponseWriter is a wrapper around net/http.ResponseWriter that provides extra information about
-// the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
-// if the functionality calls for it.
-type ResponseWriter struct {
-	http.ResponseWriter
+// Wrap a net/http.ResponseWriter, return rw if rw is already wrapped
+func Wrap(rw http.ResponseWriter) ResponseWriter {
+	if rw, ok := rw.(*responseWritter); ok {
+		return rw
+	}
+	return &responseWritter{rw: rw}
+}
+
+type responseWritter struct {
+	rw       http.ResponseWriter
 	status   int
 	size     int
 	hijacked bool
 }
 
-// static type check
 var (
-	_ http.ResponseWriter = (*ResponseWriter)(nil)
-	_ http.Flusher        = (*ResponseWriter)(nil)
-	_ http.Hijacker       = (*ResponseWriter)(nil)
+	_ http.ResponseWriter = (*responseWritter)(nil)
+	_ http.Flusher        = (*responseWritter)(nil)
+	_ http.Hijacker       = (*responseWritter)(nil)
 )
 
-// WriteHeader from net/http.ResponseWriter
-func (rw *ResponseWriter) WriteHeader(s int) {
-	rw.status = s
-	rw.ResponseWriter.WriteHeader(s)
+func (rw *responseWritter) Header() http.Header {
+	return rw.rw.Header()
 }
 
-// Write from net/http.ResponseWriter
-func (rw *ResponseWriter) Write(b []byte) (int, error) {
+func (rw *responseWritter) WriteHeader(s int) {
 	if !rw.Written() {
-		// The status will be StatusOK if WriteHeader has not been called yet
+		rw.status = s
+		rw.rw.WriteHeader(s)
+	}
+}
+
+func (rw *responseWritter) Write(b []byte) (int, error) {
+	if !rw.Written() {
 		rw.WriteHeader(http.StatusOK)
 	}
-	size, err := rw.ResponseWriter.Write(b)
+	size, err := rw.rw.Write(b)
 	rw.size += size
 	return size, err
 }
 
-// Status returns the status code of the response or 0 if the response has
-// not been written
-func (rw *ResponseWriter) Status() int {
+func (rw *responseWritter) Status() int {
 	return rw.status
 }
 
-// Size returns the size of the response body.
-func (rw *ResponseWriter) Size() int {
+func (rw *responseWritter) Size() int {
 	return rw.size
 }
 
-// Written returns whether or not the ResponseWriter has been written.
-func (rw *ResponseWriter) Written() bool {
+func (rw *responseWritter) Written() bool {
 	return rw.status != 0
 }
 
-// Hijack from net/http.Hijacker
-func (rw *ResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hijacker, ok := rw.ResponseWriter.(http.Hijacker)
+func (rw *responseWritter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := rw.rw.(http.Hijacker)
 	if !ok {
-		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
+		return nil, nil, fmt.Errorf("Hijack is not supported")
 	}
 	c, bufrw, err := hijacker.Hijack()
 	rw.hijacked = err == nil
 	return c, bufrw, err
 }
 
-// Hijacked return true if the underlying ResponseWritter already hijacked
-func (rw *ResponseWriter) Hijacked() bool {
+func (rw *responseWritter) Hijacked() bool {
 	return rw.hijacked
 }
 
-// Flush from net/http.Flusher
-func (rw *ResponseWriter) Flush() {
-	flusher, ok := rw.ResponseWriter.(http.Flusher)
-	if ok {
-		if !rw.Written() {
-			// The status will be StatusOK if WriteHeader has not been called yet
-			rw.WriteHeader(http.StatusOK)
-		}
-		flusher.Flush()
+func (rw *responseWritter) Flush() {
+	flusher, ok := rw.rw.(http.Flusher)
+	if !ok {
+		return
 	}
+	if !rw.Written() {
+		rw.WriteHeader(http.StatusOK)
+	}
+	flusher.Flush()
 }

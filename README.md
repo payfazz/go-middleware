@@ -1,21 +1,34 @@
 # go-middleware
 
-[![GoDoc](https://godoc.org/github.com/payfazz/go-middleware?status.svg)][godoc]
+[![Go Reference](https://pkg.go.dev/badge/github.com/payfazz/go-middleware.svg)](https://pkg.go.dev/github.com/payfazz/go-middleware)
 
-Fast golang middleware.
+Golang middleware collection
 
-This project is about simple http middleware that preserve `http.Handler` and `http.HandlerFunc` signature.
+Middleware is value that have following type
+```go
+func(http.HandlerFunc) http.HandlerFunc
+```
 
-It heavily use clousure and tail call (so it will be faster when tail-cail-optimization implemented on golang in the future). The final middleware chain is precompute, so it should be fast.
+In following example, `testMiddleware` is a middleware that adding some header to the response
+```go
+var handler http.HandlerFunc = ...
+var someMiddleware func(next http.HandlerFunc) http.HanlderFunc = ...
 
-see [godoc][godoc] and examples for more information
+testMiddleware := func(next http.HandlerFunc) http.HanlderFunc {
+  return func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Add("TestHeader", "test value")
+    next(w, r)
+  }
+}
 
-see https://github.com/payfazz/go-router for router
+combinedHandler := someMiddleware(testMiddleware(handler))
+```
 
-see https://github.com/payfazz/go-handler for alternative signature of http handling
-
-## TODO
-
-* More documentation and examples
-
-[godoc]: https://godoc.org/github.com/payfazz/go-middleware
+Use [httpchain](https://pkg.go.dev/github.com/payfazz/httpchain) package to chaining multiple middleware, so you can write
+```go
+combinedHandler := httpchain.Chain(
+  someMiddleware,
+  testMiddleware,
+  handler,
+)
+```
