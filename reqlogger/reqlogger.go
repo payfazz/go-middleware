@@ -21,9 +21,9 @@ func New(dest io.Writer) func(http.HandlerFunc) http.HandlerFunc {
 
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-
 			w2 := responsewriter.Wrap(w)
+
+			start := time.Now()
 
 			next(w2, r)
 

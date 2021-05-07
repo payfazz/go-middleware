@@ -1,0 +1,4 @@
+github.com/payfazz/go-errors/v2 v2.0.8 h1:QhQGNKYTZBYKKwcdpQcwzsiHv2ll71g2jmxZFQy/1Nc=
+github.com/payfazz/go-errors/v2 v2.0.8/go.mod h1:g6OaiFrvL1npZWCHsMNgiUrAnduV3iypb29AzNpQOs8=
+github.com/payfazz/httpchain v1.0.1 h1:ktdRgMd73cKW5x+r0rburQviKWFBSYAi1ybcQOoGkd4=
+github.com/payfazz/httpchain v1.0.1/go.mod h1:HowfuwgTYOAqGxkiFFnGn5qRyJaRK+lHiX78zL0cLfU=
