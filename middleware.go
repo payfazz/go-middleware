@@ -1,6 +1,8 @@
 // Package middleware
 //
 // this package re-export Chain from github.com/payfazz/httpchain
+//
+// see subpackage for collections of middleware
 package middleware
 
 import (

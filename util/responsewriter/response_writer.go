@@ -13,13 +13,13 @@ import (
 type ResponseWriter interface {
 	http.ResponseWriter
 
-	// Written status
+	// Tells status if already written, otherwise 0
 	Status() int
 
-	// Written body size
+	// Tells body size if already written, otherwise 0
 	Size() int
 
-	// Written
+	// Tells if already written
 	Written() bool
 
 	// Tells if hijacked
@@ -43,7 +43,6 @@ type responseWritter struct {
 
 var (
 	_ http.ResponseWriter = (*responseWritter)(nil)
-	_ http.Flusher        = (*responseWritter)(nil)
 	_ http.Hijacker       = (*responseWritter)(nil)
 )
 
@@ -91,15 +90,4 @@ func (rw *responseWritter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 
 func (rw *responseWritter) Hijacked() bool {
 	return rw.hijacked
-}
-
-func (rw *responseWritter) Flush() {
-	flusher, ok := rw.rw.(http.Flusher)
-	if !ok {
-		return
-	}
-	if !rw.Written() {
-		rw.WriteHeader(http.StatusOK)
-	}
-	flusher.Flush()
 }

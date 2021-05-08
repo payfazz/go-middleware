@@ -11,7 +11,10 @@ import (
 
 func TestA(t *testing.T) {
 	res := httptest.NewRecorder()
-	h := func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "test") }
+	h := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("test", "test")
+		fmt.Fprint(w, "test")
+	}
 
 	wrappedRes := responsewriter.Wrap(res)
 	if responsewriter.Wrap(wrappedRes) != wrappedRes {
@@ -26,6 +29,10 @@ func TestA(t *testing.T) {
 
 	if wrappedRes.Status() != 200 {
 		t.Errorf("wrappedRes.Status should be 200")
+	}
+
+	if res.Header().Get("test") != "test" {
+		t.Errorf(`res.Header().Get("test") should be "test"`)
 	}
 
 	if wrappedRes.Size() != 4 {

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/payfazz/go-middleware"
 	"github.com/payfazz/go-middleware/util/kv"
 )
 
@@ -16,20 +17,20 @@ func TestNormal(t *testing.T) {
 	type someotherkeytype struct{}
 	var someotherkey someotherkeytype
 
-	m1 := func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			next(w, kv.WithValue(r, somekey, "test-value"))
-		}
-	}
-	m2 := kv.Injector(20, "someint")
-	h := func(w http.ResponseWriter, r *http.Request) {
-		val1, ok1 := kv.Get(r, somekey)
-		val2, ok2 := kv.Get(r, someotherkey)
-		val3 := kv.MustGet(r, 20)
-		fmt.Fprintf(w, "%v:%v|%v:%v|true:%v", ok1, val1, ok2, val2, val3)
-	}
-
-	all := m1(m2(h))
+	all := middleware.Chain(
+		func(next http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				next(w, kv.WithValue(r, somekey, "test-value"))
+			}
+		},
+		kv.Injector(20, "someint"),
+		func(w http.ResponseWriter, r *http.Request) {
+			val1, ok1 := kv.Get(r, somekey)
+			val2, ok2 := kv.Get(r, someotherkey)
+			val3 := kv.MustGet(r, 20)
+			fmt.Fprintf(w, "%v:%v|%v:%v|true:%v", ok1, val1, ok2, val2, val3)
+		},
+	)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/", nil)
