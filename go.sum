@@ -2,10 +2,10 @@ github.com/mattn/go-colorable v0.1.8 h1:c1ghPdyEDarC70ftn0y+A/Ee++9zz8ljHG1b13eJ
 github.com/mattn/go-colorable v0.1.8/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
-github.com/payfazz/go-errors/v2 v2.0.9 h1:StA3tR/HRPJLPPxcAtTn2NcOt3iv1dTTsX2QazYKtx4=
-github.com/payfazz/go-errors/v2 v2.0.9/go.mod h1:g6OaiFrvL1npZWCHsMNgiUrAnduV3iypb29AzNpQOs8=
-github.com/payfazz/httpchain v1.0.2 h1:u2OiRGkeXPhteQj+7CL3h+FkjL+gVIZc+NuMPRJNux4=
-github.com/payfazz/httpchain v1.0.2/go.mod h1:HowfuwgTYOAqGxkiFFnGn5qRyJaRK+lHiX78zL0cLfU=
+github.com/payfazz/go-errors/v2 v2.0.10 h1:M2WHhlEG9Diz5QeDwclkokyMPR1nV3wm2Fbe8vFgZ38=
+github.com/payfazz/go-errors/v2 v2.0.10/go.mod h1:g6OaiFrvL1npZWCHsMNgiUrAnduV3iypb29AzNpQOs8=
+github.com/payfazz/httpchain v1.0.3 h1:bODino5H+0WUpytedepZF2zOPKo0SLgkUxS8pc6Jddg=
+github.com/payfazz/httpchain v1.0.3/go.mod h1:HowfuwgTYOAqGxkiFFnGn5qRyJaRK+lHiX78zL0cLfU=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae h1:/WDfKMnPU+m5M4xB+6x4kaepxRw6jWvR5iDRdvjHgy8=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

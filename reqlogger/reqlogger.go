@@ -50,7 +50,7 @@ func statusColorForHijacked(enabled bool) string {
 		return ""
 	}
 
-	return green
+	return cyan
 }
 
 func methodColorFor(enabled bool, method string) string {
