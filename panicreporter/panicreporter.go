@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/mattn/go-colorable"
@@ -17,12 +16,17 @@ import (
 	"github.com/payfazz/go-middleware/util/responsewriter"
 )
 
-func defaultReporter() func(err error) {
-	filterOutRe := regexp.MustCompile(
-		`^(github.com/payfazz/go-middleware|github.com/payfazz/httpchain|net/http)(\.|/)`,
-	)
-	filter := func(l trace.Location) bool { return !filterOutRe.MatchString(l.Func()) }
+var filterOutArr = []string{
+	"github.com/payfazz/go-middleware",
+	"github.com/payfazz/httpchain",
+	"net/http",
+}
 
+func filter(l trace.Location) bool {
+	return !l.InPkg(filterOutArr...)
+}
+
+func defaultReporter() func(err error) {
 	var w io.Writer = os.Stderr
 	prefix := "[PANIC]"
 	if isatty.IsTerminal(os.Stderr.Fd()) {
