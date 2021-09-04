@@ -35,7 +35,7 @@ func defaultReporter() func(err error) {
 	}
 
 	return func(err error) {
-		fmt.Fprintf(w, "%s %v\n%s\n", prefix, time.Now(), errors.FormatWithFilter(err, filter))
+		fmt.Fprintf(w, "%s %v\n%s\n", prefix, time.Now().Format(time.RFC3339Nano), errors.FormatWithFilter(err, filter))
 	}
 }
 
@@ -55,19 +55,12 @@ func New(reporter func(error)) func(http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w2 := responsewriter.Wrap(w)
 
-			err := errors.Catch(func() error {
-				next(w2, r)
-				return nil
-			})
-
+			err := errors.Catch(func() error { next(w2, r); return nil })
 			if err == nil {
 				return
 			}
 
-			errors.Catch(func() error {
-				reporter(err)
-				return nil
-			})
+			errors.Catch(func() error { reporter(err); return nil })
 
 			if !cleanWrite500(w2) {
 				panic(http.ErrAbortHandler)
