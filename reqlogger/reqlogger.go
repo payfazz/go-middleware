@@ -108,40 +108,42 @@ func New(dest io.Writer) func(http.HandlerFunc) http.HandlerFunc {
 
 			start := time.Now()
 
+			defer func() {
+				end := time.Now()
+				status := w2.Status()
+
+				latency := end.Sub(start)
+				if latency > time.Minute {
+					latency = latency.Truncate(time.Second)
+				}
+				latencyStr := latency.String()
+				if w2.Hijacked() {
+					latencyStr = "Hijacked"
+				}
+
+				var statusStr string
+				var statusColor string
+				if w2.Hijacked() || status == 0 {
+					statusColor = statusColorForHijacked(colorEnabled)
+					statusStr = "???"
+				} else {
+					statusColor = statusColorFor(colorEnabled, status)
+					statusStr = fmt.Sprintf("%3d", status)
+				}
+
+				methodColor := methodColorFor(colorEnabled, r.Method)
+				resetColor := resetColor(colorEnabled)
+
+				fmt.Fprintf(dest, "[REQ] %v |%s %s %s| %13s |%s %-7s %s %#v\n",
+					end.Format("2006/01/02 - 15:04:05 MST"),
+					statusColor, statusStr, resetColor,
+					latencyStr,
+					methodColor, r.Method, resetColor,
+					r.URL.EscapedPath(),
+				)
+			}()
+
 			next(w2, r)
-
-			end := time.Now()
-			status := w2.Status()
-
-			latency := end.Sub(start)
-			if latency > time.Minute {
-				latency = latency.Truncate(time.Second)
-			}
-			latencyStr := latency.String()
-			if w2.Hijacked() {
-				latencyStr = "Hijacked"
-			}
-
-			var statusStr string
-			var statusColor string
-			if w2.Hijacked() {
-				statusColor = statusColorForHijacked(colorEnabled)
-				statusStr = "???"
-			} else {
-				statusColor = statusColorFor(colorEnabled, status)
-				statusStr = fmt.Sprintf("%3d", status)
-			}
-
-			methodColor := methodColorFor(colorEnabled, r.Method)
-			resetColor := resetColor(colorEnabled)
-
-			fmt.Fprintf(dest, "[REQ] %v |%s %s %s| %13s |%s %-7s %s %#v\n",
-				end.Format("2006/01/02 - 15:04:05"),
-				statusColor, statusStr, resetColor,
-				latencyStr,
-				methodColor, r.Method, resetColor,
-				r.URL.EscapedPath(),
-			)
 		}
 	}
 }
