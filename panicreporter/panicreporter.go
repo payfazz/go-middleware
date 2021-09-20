@@ -42,7 +42,7 @@ func defaultReporter() func(err error) {
 // New return panic reporter middleware
 //
 // When panic occurs, that panic will be reported sing reporter function,
-// the error will be generated using github.com/payfazz/go-errors/v2 so you can use StackTrace function
+// the error will be generated using https://pkg.go.dev/github.com/payfazz/go-errors/v2 so you can use StackTrace function
 // to get where the panic occurs
 //
 // if reporter is nil, then every panic will be printed to stderr
@@ -75,6 +75,6 @@ func cleanWrite500(w responsewriter.ResponseWriter) bool {
 	}
 
 	w.WriteHeader(500)
-	fmt.Fprint(w, "😵 Internal Server Error")
+	fmt.Fprintln(w, "😵 Internal Server Error")
 	return true
 }
