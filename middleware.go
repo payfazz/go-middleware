@@ -15,3 +15,8 @@ import (
 func Chain(all ...interface{}) http.HandlerFunc {
 	return httpchain.Chain(all...)
 }
+
+// shortcut for Chain function
+func C(all ...interface{}) http.HandlerFunc {
+	return httpchain.Chain(all...)
+}
